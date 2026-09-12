@@ -1,6 +1,6 @@
 import type { Garment } from "./types";
 
-// Tee blank options — two real print-on-demand blank brands, each with
+// Tee blank options, two real print-on-demand blank brands, each with
 // their own Printify blueprint/print-provider (see .env.example) and a
 // different base price. Comfort Colors is a heavier, garment-dyed blank
 // and costs more than Gildan's Heavy Cotton line.
@@ -12,26 +12,27 @@ export const TEE_BLANKS = {
 export type TeeBlank = keyof typeof TEE_BLANKS;
 
 export const CAP_PRICE_CENTS = 2800;
-export const EXTRA_BRAND_PRICE_CENTS = 500;
-export const MAX_BRANDS = 5;
+export const EXTRA_SPONSOR_PRICE_CENTS = 500;
+export const MAX_SPONSORS = 5;
 
 export function basePriceCents(garment: Garment, blank: TeeBlank): number {
   return garment === "tee" ? TEE_BLANKS[blank].priceCents : CAP_PRICE_CENTS;
 }
 
-// The first brand is included; each one after it (up to MAX_BRANDS) is $5.
-export function extraBrandCount(brandCount: number): number {
-  return Math.max(0, Math.min(brandCount, MAX_BRANDS) - 1);
+// The first sponsor (brand pick or uploaded logo) is included; each one
+// after it, up to MAX_SPONSORS, is $5.
+export function extraSponsorCount(sponsorCount: number): number {
+  return Math.max(0, Math.min(sponsorCount, MAX_SPONSORS) - 1);
 }
 
 export function totalPriceCents(
   garment: Garment,
   blank: TeeBlank,
-  brandCount: number
+  sponsorCount: number
 ): number {
   return (
     basePriceCents(garment, blank) +
-    extraBrandCount(brandCount) * EXTRA_BRAND_PRICE_CENTS
+    extraSponsorCount(sponsorCount) * EXTRA_SPONSOR_PRICE_CENTS
   );
 }
 

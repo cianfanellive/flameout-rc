@@ -1,4 +1,4 @@
-import { basePriceCents, extraBrandCount, EXTRA_BRAND_PRICE_CENTS, totalPriceCents, type TeeBlank } from "./pricing";
+import { basePriceCents, extraSponsorCount, EXTRA_SPONSOR_PRICE_CENTS, totalPriceCents, type TeeBlank } from "./pricing";
 import type { Garment, PrintifyCreateResult } from "./types";
 
 const API = "https://api.printify.com/v1";
@@ -9,7 +9,7 @@ interface GarmentConfig {
   label: string;
 }
 
-// Each sellable garment — tee×blank, or cap — is its own Printify
+// Each sellable garment (tee x blank, or cap) is its own Printify
 // blueprint/print-provider pair. See .env.example for where these IDs
 // come from.
 function garmentConfig(garment: Garment, blank: TeeBlank): GarmentConfig {
@@ -24,13 +24,13 @@ function garmentConfig(garment: Garment, blank: TeeBlank): GarmentConfig {
     return {
       blueprintId: process.env.PRINTIFY_TSHIRT_COMFORT_BLUEPRINT_ID,
       printProviderId: process.env.PRINTIFY_TSHIRT_COMFORT_PRINT_PROVIDER_ID,
-      label: "Tee — Comfort Colors 1717",
+      label: "Tee, Comfort Colors 1717",
     };
   }
   return {
     blueprintId: process.env.PRINTIFY_TSHIRT_GILDAN_BLUEPRINT_ID,
     printProviderId: process.env.PRINTIFY_TSHIRT_GILDAN_PRINT_PROVIDER_ID,
-    label: "Tee — Gildan Heavy Cotton (5000)",
+    label: "Tee, Gildan Heavy Cotton (5000)",
   };
 }
 
@@ -45,34 +45,35 @@ async function printifyFetch(path: string, apiKey: string, init?: RequestInit) {
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Printify ${path} → ${res.status}: ${body.slice(0, 400)}`);
+    throw new Error(`Printify ${path} returned ${res.status}: ${body.slice(0, 400)}`);
   }
   return res.json();
 }
 
 /**
  * Uploads the generated artwork and creates a draft product in the
- * configured Printify shop. See .env.example for the env vars this needs —
+ * configured Printify shop. See .env.example for the env vars this needs,
  * any missing one (including the shop-wide API key/shop id) makes this
  * resolve to a stub describing exactly what *would* have been sent, so the
  * "Send to Printify" button in the UI always has something to show.
  *
- * Price is always recomputed here from garment/blank/brand count — never
- * trusted from the client — so a tampered request can't undercut the real
- * price.
+ * Price is always recomputed here from garment, blank, and sponsor count,
+ * never trusted from the client, so a tampered request can't undercut the
+ * real price.
  *
  * Real-integration notes (printify.com/docs/api):
- *  - POST /v1/uploads/images.json            → upload artwork, get an image id
- *  - GET  /v1/catalog/.../variants.json      → look up sellable variant ids
- *  - POST /v1/shops/{shop_id}/products.json  → create the product
- * This does not publish to a sales channel — Printify still needs a
- * connected storefront (Shopify/Etsy/etc, or its own Pop-Up Store) for
+ *  - POST /v1/uploads/images.json            uploads artwork, returns an image id
+ *  - GET  /v1/catalog/.../variants.json      looks up sellable variant ids
+ *  - POST /v1/shops/{shop_id}/products.json  creates the product
+ * This does not publish to a sales channel. Printify still needs a
+ * connected storefront (Shopify, Etsy, etc, or its own Pop-Up Store) for
  * customers to actually check out.
  */
 export async function createPrintifyProduct(input: {
   garment: Garment;
   blank: TeeBlank;
-  brands: string[];
+  sponsorCount: number;
+  sponsorLabels: string[];
   title: string;
   imageDataUrl: string;
 }): Promise<PrintifyCreateResult> {
@@ -81,8 +82,8 @@ export async function createPrintifyProduct(input: {
   const cfg = garmentConfig(input.garment, input.blank);
 
   const base = basePriceCents(input.garment, input.blank);
-  const extras = extraBrandCount(input.brands.length);
-  const price = totalPriceCents(input.garment, input.blank, input.brands.length);
+  const extras = extraSponsorCount(input.sponsorCount);
+  const price = totalPriceCents(input.garment, input.blank, input.sponsorCount);
 
   const wouldCreate = {
     title: input.title,
@@ -90,14 +91,14 @@ export async function createPrintifyProduct(input: {
     blueprint_id: cfg.blueprintId ?? "(not configured)",
     print_provider_id: cfg.printProviderId ?? "(not configured)",
     base_price_cents: base,
-    extra_brand_fee_cents: extras * EXTRA_BRAND_PRICE_CENTS,
+    extra_sponsor_fee_cents: extras * EXTRA_SPONSOR_PRICE_CENTS,
     total_price_cents: price,
   };
 
   if (!apiKey || !shopId || !cfg.blueprintId || !cfg.printProviderId) {
     return {
       stubbed: true,
-      note: "Demo mode — set PRINTIFY_API_KEY, PRINTIFY_SHOP_ID and this garment's blueprint/print-provider IDs in .env to actually create this product in Printify.",
+      note: "Demo mode. Set PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, and this garment's blueprint/print-provider IDs in .env to actually create this product in Printify.",
       wouldCreate,
     };
   }
@@ -124,7 +125,7 @@ export async function createPrintifyProduct(input: {
       method: "POST",
       body: JSON.stringify({
         title: input.title,
-        description: `Custom ${cfg.label.toLowerCase()} — ${input.brands.join(", ")}. Generated by FlameoutRC.`,
+        description: `Custom ${cfg.label.toLowerCase()}. Sponsors: ${input.sponsorLabels.join(", ")}. Generated by FlameoutRC.`,
         blueprint_id: Number(cfg.blueprintId),
         print_provider_id: Number(cfg.printProviderId),
         variants: variantIds.map((id) => ({ id, price, is_enabled: true })),

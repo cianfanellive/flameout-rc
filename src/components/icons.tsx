@@ -1,4 +1,4 @@
-// Hand-drawn brand marks — kept as inline SVG (no icon-font, no stock art)
+// Hand-drawn brand marks, kept as inline SVG (no icon-font, no stock art)
 // so the racing motifs stay crisp at any size and match the brand palette.
 
 export function FlameMark({ className = "h-6 w-6" }: { className?: string }) {

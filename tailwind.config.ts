@@ -41,7 +41,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        // Display: condensed, bold, numeral-forward — livery / race-number energy.
+        // Display: Anton, a single heavy weight built for all-caps titles.
         display: ["var(--font-display)", "system-ui", "sans-serif"],
         sans: ["var(--font-body)", "system-ui", "sans-serif"],
       },

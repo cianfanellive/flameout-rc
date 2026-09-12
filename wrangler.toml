@@ -3,7 +3,7 @@ compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
 
-# No database/storage bindings — this project is stateless (see README).
+# No database/storage bindings, this project is stateless (see README).
 # The design generator runs client-side (no key needed). Set real Printify
 # secrets once you're ready to create real products, via:
 #   npx wrangler pages secret put PRINTIFY_API_KEY --project-name=flameout-rc

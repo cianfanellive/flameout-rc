@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { createPrintifyProduct } from "@/lib/printify";
-import { MAX_BRANDS } from "@/lib/pricing";
+import { MAX_SPONSORS } from "@/lib/pricing";
 import type { Garment } from "@/lib/types";
 import type { TeeBlank } from "@/lib/pricing";
 
-// Required by @cloudflare/next-on-pages — see printify.ts for why this is
-// safe (no Node-only APIs used anywhere in the import chain).
+// Required by @cloudflare/next-on-pages: Cloudflare Pages Functions run on
+// Workers, not Node.
 export const runtime = "edge";
 
 const GARMENTS: Garment[] = ["tee", "cap"];
@@ -24,26 +24,37 @@ export async function POST(request: Request) {
   const blank = (b.blank as TeeBlank) ?? "gildan";
   const title = typeof b.title === "string" ? b.title.slice(0, 120) : "";
   const imageDataUrl = typeof b.imageDataUrl === "string" ? b.imageDataUrl : "";
-  const brands = Array.isArray(b.brands)
-    ? b.brands.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+  const sponsorLabels = Array.isArray(b.sponsorLabels)
+    ? b.sponsorLabels.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
     : [];
+  const sponsorCount =
+    typeof b.sponsorCount === "number" && Number.isFinite(b.sponsorCount)
+      ? Math.round(b.sponsorCount)
+      : sponsorLabels.length;
 
   if (
     !GARMENTS.includes(garment) ||
     !BLANKS.includes(blank) ||
     !title.trim() ||
     !imageDataUrl.startsWith("data:image") ||
-    brands.length < 1 ||
-    brands.length > MAX_BRANDS
+    sponsorCount < 1 ||
+    sponsorCount > MAX_SPONSORS
   ) {
     return NextResponse.json(
       {
-        error: `Missing or invalid fields. Need garment, blank, a title, an imageDataUrl, and 1-${MAX_BRANDS} brand names.`,
+        error: `Missing or invalid fields. Need garment, blank, a title, an imageDataUrl, and 1 to ${MAX_SPONSORS} sponsors.`,
       },
       { status: 400 }
     );
   }
 
-  const result = await createPrintifyProduct({ garment, blank, brands, title, imageDataUrl });
+  const result = await createPrintifyProduct({
+    garment,
+    blank,
+    sponsorCount,
+    sponsorLabels,
+    title,
+    imageDataUrl,
+  });
   return NextResponse.json(result);
 }

@@ -9,19 +9,19 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-2">
               <FlameMark className="h-5 w-5 text-flame-500" />
-              <span className="font-display text-lg font-bold uppercase tracking-wide text-chrome-300">
+              <span className="font-display text-lg uppercase tracking-wide text-chrome-300">
                 Flameout<span className="text-flame-500">RC</span>
               </span>
             </div>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-chrome-400">
               Custom apparel for the RC-obsessed. Every design is generated for
-              your rig, your colors, your run — printed one at a time, never
+              your rig, your colors, your run, printed one at a time, never
               mass produced.
             </p>
           </div>
 
           <div>
-            <p className="font-display text-xs font-bold uppercase tracking-widest text-chrome-400">
+            <p className="font-display text-xs uppercase tracking-widest text-chrome-400">
               Shop
             </p>
             <ul className="mt-3 space-y-2 text-sm text-chrome-400">
@@ -44,7 +44,7 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="font-display text-xs font-bold uppercase tracking-widest text-chrome-400">
+            <p className="font-display text-xs uppercase tracking-widest text-chrome-400">
               Info
             </p>
             <ul className="mt-3 space-y-2 text-sm text-chrome-400">
@@ -76,7 +76,7 @@ export function Footer() {
           <p>© {new Date().getFullYear()} FlameoutRC. Not affiliated with any RC manufacturer.</p>
           <p>
             Brand names are shown in our own typography, not reproduced
-            logos — not licensed or endorsed by any manufacturer listed.
+            logos. Not licensed or endorsed by any manufacturer listed.
           </p>
         </div>
       </div>

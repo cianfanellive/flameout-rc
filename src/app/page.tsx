@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { GarmentMockup } from "@/components/GarmentMockup";
-import { liverySvgDataUri, type LiveryStyle } from "@/lib/livery";
-import { EXTRA_BRAND_PRICE_CENTS, formatUsd, MAX_BRANDS } from "@/lib/pricing";
+import { buildLiverySVG, type LiveryStyle, type SponsorItem } from "@/lib/livery";
+import { EXTRA_SPONSOR_PRICE_CENTS, formatUsd, MAX_SPONSORS } from "@/lib/pricing";
 import {
   BoltIcon,
   CheckeredFlagIcon,
@@ -16,60 +16,60 @@ import {
 const STEPS = [
   {
     icon: GaugeIcon,
-    title: "Pick your brands",
-    body: "Choose your rig's brand from the dropdown — Traxxas, ARRMA, Losi, and more. Add up to 5; each one past the first is +$5.",
+    title: "PICK YOUR SPONSORS",
+    body: "Choose real RC brands from the dropdown or upload your own logo. Add up to 5, each one past the first is +$5.",
   },
   {
     icon: BoltIcon,
-    title: "Dial in your colors",
-    body: "Pick a primary and secondary color and a livery style. The design updates live as you go — no waiting, no generating.",
+    title: "DIAL IN THE LOOK",
+    body: "Colors, a livery style, and one of 20 fonts. The design updates live as you go, no waiting, no generating.",
   },
   {
     icon: ShirtIcon,
-    title: "See it on the shirt",
-    body: "Step two shows the full tee or cap mockup with your design on it, plus the exact price before you commit to anything.",
+    title: "SEE IT ON THE SHIRT",
+    body: "The full tee or cap mockup updates instantly, with the exact price shown before you commit to anything.",
   },
   {
     icon: TruckIcon,
-    title: "We print & ship",
-    body: "Printify handles production and shipping on demand — no warehouse, no minimums, no waiting on a batch run.",
+    title: "WE PRINT AND SHIP",
+    body: "Printify handles production and shipping on demand. No warehouse, no minimums, no waiting on a batch run.",
   },
 ];
 
 const FEATURES = [
   {
-    title: "You're in control",
-    body: "No AI improvising your design — you pick the exact brands, colors, and layout, and see precisely what you'll get.",
+    title: "YOUR LOGO OR OURS",
+    body: "Pick a brand from the list or upload your own sponsor logo. Mix both in the same sponsor board.",
   },
   {
-    title: "Print-on-demand",
-    body: "Nothing gets made until you order it. No dead stock, no clearance bin, no waste.",
+    title: "20 FONTS, 3 NAME TAG STYLES",
+    body: "Bar, outline, or badge for your driver name and car number, set in a real font, not a generic default.",
   },
   {
-    title: "Real blanks, real choice",
-    body: "Gildan Heavy Cotton or Comfort Colors for tees — pick the weight and feel, the price adjusts to match.",
+    title: "REAL BLANKS, REAL CHOICE",
+    body: "Gildan Heavy Cotton or Comfort Colors for tees. Pick the weight and feel, the price adjusts to match.",
   },
   {
-    title: "Typography, not bootleg logos",
-    body: "Brand names are set in our own display type, never traced manufacturer artwork — see the footer for the full note.",
+    title: "TYPOGRAPHY, NOT BOOTLEG LOGOS",
+    body: "Brand names are set in our own display type, never traced manufacturer artwork. See the footer for the full note.",
   },
 ];
 
 const SHOWCASE: Array<{
   garment: "tee" | "cap";
-  discipline: string;
-  brands: string[];
+  label: string;
+  sponsors: SponsorItem[];
   primary: string;
   secondary: string;
   style: LiveryStyle;
   garmentColor: "black" | "charcoal" | "white";
 }> = [
-  { garment: "tee", discipline: "1:10 BUGGY", brands: ["Traxxas"], primary: "#ff5a1f", secondary: "#ffc400", style: "flame", garmentColor: "black" },
-  { garment: "cap", discipline: "SHORT COURSE TRUCK", brands: ["Team Associated", "Losi"], primary: "#ff2d2d", secondary: "#0a0c0f", style: "checkered", garmentColor: "black" },
-  { garment: "tee", discipline: "RC DRIFT", brands: ["ARRMA"], primary: "#7dd3fc", secondary: "#ff2d2d", style: "neon", garmentColor: "charcoal" },
-  { garment: "cap", discipline: "ROCK CRAWLER", brands: ["Axial"], primary: "#c9ccd1", secondary: "#5b6470", style: "carbon", garmentColor: "black" },
-  { garment: "tee", discipline: "FPV DRONE", brands: ["Redcat Racing", "Pro-Line", "JConcepts"], primary: "#ffd23f", secondary: "#ff5a1f", style: "retro", garmentColor: "charcoal" },
-  { garment: "cap", discipline: "NITRO ON-ROAD", brands: ["Kyosho"], primary: "#ff8a3d", secondary: "#ffc400", style: "flame", garmentColor: "charcoal" },
+  { garment: "tee", label: "TRAXXAS", sponsors: [{ kind: "text", label: "Traxxas" }], primary: "#ff5a1f", secondary: "#ffc400", style: "flame", garmentColor: "black" },
+  { garment: "cap", label: "TEAM ASSOCIATED x LOSI", sponsors: [{ kind: "text", label: "Team Associated" }, { kind: "text", label: "Losi" }], primary: "#ff2d2d", secondary: "#0a0c0f", style: "checkered", garmentColor: "black" },
+  { garment: "tee", label: "ARRMA", sponsors: [{ kind: "text", label: "ARRMA" }], primary: "#7dd3fc", secondary: "#ff2d2d", style: "neon", garmentColor: "charcoal" },
+  { garment: "cap", label: "AXIAL", sponsors: [{ kind: "text", label: "Axial" }], primary: "#c9ccd1", secondary: "#5b6470", style: "carbon", garmentColor: "black" },
+  { garment: "tee", label: "REDCAT x PRO-LINE x JCONCEPTS", sponsors: [{ kind: "text", label: "Redcat Racing" }, { kind: "text", label: "Pro-Line" }, { kind: "text", label: "JConcepts" }], primary: "#ffd23f", secondary: "#ff5a1f", style: "retro", garmentColor: "charcoal" },
+  { garment: "cap", label: "KYOSHO", sponsors: [{ kind: "text", label: "Kyosho" }], primary: "#ff8a3d", secondary: "#ffc400", style: "flame", garmentColor: "charcoal" },
 ];
 
 export default function HomePage() {
@@ -85,11 +85,11 @@ export default function HomePage() {
 
         <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[1.1fr_0.9fr] md:py-24">
           <div className="flex flex-col justify-center">
-            <span className="mb-5 inline-flex w-fit items-center gap-2 rounded-sm border border-flame-500/40 bg-flame-500/10 px-3 py-1 font-display text-xs font-bold uppercase tracking-widest text-flame-400">
+            <span className="mb-5 inline-flex w-fit items-center gap-2 rounded-sm border border-flame-500/40 bg-flame-500/10 px-3 py-1 font-display text-xs uppercase tracking-widest text-flame-400">
               <CheckeredFlagIcon className="h-4 w-4" />
-              Pick your brands · Print-on-demand
+              PICK OR UPLOAD YOUR SPONSORS. PRINT-ON-DEMAND.
             </span>
-            <h1 className="font-display text-5xl font-bold uppercase leading-[0.98] tracking-tight text-chrome-300 sm:text-6xl md:text-7xl">
+            <h1 className="font-display text-5xl uppercase leading-[0.98] tracking-tight text-chrome-300 sm:text-6xl md:text-7xl">
               Design your
               <br />
               <span className="text-flame-500">ride.</span> Wear your
@@ -97,34 +97,34 @@ export default function HomePage() {
               <span className="text-stroke">rig.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-chrome-400">
-              Pick up to {MAX_BRANDS} RC brands, your colors, and a livery
-              style. See it update live, then see it on the shirt — printed
-              one-off on a tee or snapback, no minimums.
+              Pick up to {MAX_SPONSORS} RC brands or upload your own logos, your colors, a
+              livery style, and a font. See it update live, then see it on the shirt, printed
+              one-off on a tee or snapback. No minimums.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
                 href="/design"
-                className="rounded-sm bg-flame-500 px-6 py-3.5 font-display text-sm font-bold uppercase tracking-wider text-asphalt-950 shadow-glow transition hover:bg-flame-400"
+                className="rounded-sm bg-flame-500 px-6 py-3.5 font-display uppercase tracking-wider text-asphalt-950 shadow-glow transition hover:bg-flame-400"
               >
-                Start Your Design →
+                START YOUR DESIGN →
               </Link>
               <Link
                 href="#how-it-works"
-                className="rounded-sm border border-white/15 px-6 py-3.5 font-display text-sm font-bold uppercase tracking-wider text-chrome-300 transition hover:border-flame-500/50 hover:text-flame-400"
+                className="rounded-sm border border-white/15 px-6 py-3.5 font-display uppercase tracking-wider text-chrome-300 transition hover:border-flame-500/50 hover:text-flame-400"
               >
-                How It Works
+                HOW IT WORKS
               </Link>
             </div>
 
             <dl className="mt-12 grid grid-cols-2 gap-6 border-t border-white/10 pt-8 sm:grid-cols-4">
               {[
-                ["Live", "instant preview"],
-                [`${MAX_BRANDS}`, "brands, max"],
-                ["2", "garments: tee + cap"],
-                [`+${formatUsd(EXTRA_BRAND_PRICE_CENTS)}`, "per extra brand"],
+                ["LIVE", "INSTANT PREVIEW"],
+                [`${MAX_SPONSORS}`, "SPONSORS, MAX"],
+                ["20", "FONTS TO PICK FROM"],
+                [`+${formatUsd(EXTRA_SPONSOR_PRICE_CENTS)}`, "PER EXTRA SPONSOR"],
               ].map(([value, label]) => (
                 <div key={label}>
-                  <dt className="font-display text-2xl font-bold text-flame-400">{value}</dt>
+                  <dt className="font-display text-2xl text-flame-400">{value}</dt>
                   <dd className="text-xs uppercase tracking-wide text-chrome-400/80">{label}</dd>
                 </div>
               ))}
@@ -134,22 +134,20 @@ export default function HomePage() {
           <div className="relative mx-auto flex w-full max-w-sm items-center justify-center">
             <div className="w-[68%] rotate-[3deg] drop-shadow-2xl">
               <GarmentMockup garment="tee" garmentColor="black">
-                <LiveryImg
+                <LiverySvg
                   primary="#ff5a1f"
                   secondary="#ffc400"
-                  brands={["Traxxas"]}
-                  tag="1:10 BUGGY"
+                  sponsors={[{ kind: "text", label: "Traxxas" }]}
                   style="flame"
                 />
               </GarmentMockup>
             </div>
             <div className="absolute -bottom-4 -left-2 w-[42%] -rotate-[6deg] drop-shadow-2xl">
               <GarmentMockup garment="cap" garmentColor="charcoal">
-                <LiveryImg
+                <LiverySvg
                   primary="#ff2d2d"
                   secondary="#0a0c0f"
-                  brands={["Team Associated", "Losi"]}
-                  tag=""
+                  sponsors={[{ kind: "text", label: "Team Associated" }, { kind: "text", label: "Losi" }]}
                   style="checkered"
                 />
               </GarmentMockup>
@@ -161,18 +159,16 @@ export default function HomePage() {
       {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
       <section id="how-it-works" className="border-b border-white/10 bg-asphalt-950 py-20">
         <div className="mx-auto max-w-6xl px-5">
-          <SectionHeading eyebrow="The Flow" title="From pit box to print in four steps" />
+          <SectionHeading eyebrow="THE FLOW" title="FROM PIT BOX TO PRINT IN FOUR STEPS" />
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((step, i) => (
               <div
                 key={step.title}
                 className="asphalt-texture group relative rounded-md border border-white/10 bg-asphalt-800 p-6 shadow-panel transition hover:border-flame-500/40"
               >
-                <span className="font-display text-5xl font-bold text-white/5">
-                  0{i + 1}
-                </span>
+                <span className="font-display text-5xl text-white/5">0{i + 1}</span>
                 <step.icon className="mt-2 h-7 w-7 text-flame-500" />
-                <h3 className="mt-3 font-display text-lg font-bold uppercase tracking-wide text-chrome-300">
+                <h3 className="mt-3 font-display text-lg uppercase tracking-wide text-chrome-300">
                   {step.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-chrome-400">{step.body}</p>
@@ -185,15 +181,13 @@ export default function HomePage() {
       {/* ── FEATURES ─────────────────────────────────────────────────── */}
       <section className="stripes-thick border-b border-white/10 bg-asphalt-900 py-20">
         <div className="mx-auto max-w-6xl px-5">
-          <SectionHeading eyebrow="Built Different" title="Not another blank-tee dropship store" />
+          <SectionHeading eyebrow="BUILT DIFFERENT" title="THE BEST CREATION TOOL IN RC APPAREL" />
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             {FEATURES.map((f) => (
               <div key={f.title} className="flex gap-4 rounded-md border border-white/10 bg-asphalt-950/60 p-5">
                 <FlameMark className="mt-1 h-5 w-5 flex-shrink-0 text-flame-500" />
                 <div>
-                  <h3 className="font-display text-base font-bold uppercase tracking-wide text-chrome-300">
-                    {f.title}
-                  </h3>
+                  <h3 className="font-display text-base uppercase tracking-wide text-chrome-300">{f.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-chrome-400">{f.body}</p>
                 </div>
               </div>
@@ -205,31 +199,24 @@ export default function HomePage() {
       {/* ── SHOWCASE ─────────────────────────────────────────────────── */}
       <section id="showcase" className="border-b border-white/10 bg-asphalt-950 py-20">
         <div className="mx-auto max-w-6xl px-5">
-          <SectionHeading
-            eyebrow="Livery Gallery"
-            title="Every discipline. Every brand combo."
-          />
+          <SectionHeading eyebrow="LIVERY GALLERY" title="EVERY SPONSOR COMBO. EVERY STYLE." />
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {SHOWCASE.map((item) => (
               <div
-                key={item.brands.join("+")}
+                key={item.label}
                 className="group rounded-md border border-white/10 bg-asphalt-800 p-6 shadow-panel transition hover:border-flame-500/40"
               >
                 <GarmentMockup garment={item.garment} garmentColor={item.garmentColor}>
-                  <LiveryImg
+                  <LiverySvg
                     primary={item.primary}
                     secondary={item.secondary}
-                    brands={item.brands}
-                    tag={item.discipline}
+                    sponsors={item.sponsors}
                     style={item.style}
                   />
                 </GarmentMockup>
-                <div className="mt-4 flex items-center justify-between gap-2">
-                  <span className="font-display text-sm font-bold uppercase tracking-wide text-chrome-300">
-                    {item.brands.join(" × ")}
-                  </span>
-                  <span className="font-display text-[11px] uppercase tracking-widest text-flame-400/80">
-                    {item.discipline}
+                <div className="mt-4">
+                  <span className="font-display text-sm uppercase tracking-wide text-chrome-300">
+                    {item.label}
                   </span>
                 </div>
               </div>
@@ -238,9 +225,9 @@ export default function HomePage() {
           <div className="mt-10 flex justify-center">
             <Link
               href="/design"
-              className="rounded-sm bg-flame-500 px-6 py-3.5 font-display text-sm font-bold uppercase tracking-wider text-asphalt-950 shadow-glow transition hover:bg-flame-400"
+              className="rounded-sm bg-flame-500 px-6 py-3.5 font-display uppercase tracking-wider text-asphalt-950 shadow-glow transition hover:bg-flame-400"
             >
-              Build Yours →
+              BUILD YOURS →
             </Link>
           </div>
         </div>
@@ -249,30 +236,34 @@ export default function HomePage() {
       {/* ── FAQ ──────────────────────────────────────────────────────── */}
       <section id="faq" className="border-b border-white/10 bg-asphalt-900 py-20">
         <div className="mx-auto max-w-4xl px-5">
-          <SectionHeading eyebrow="FAQ" title="Good to know before your first order" />
+          <SectionHeading eyebrow="FAQ" title="GOOD TO KNOW BEFORE YOUR FIRST ORDER" />
           <div className="mt-10 divide-y divide-white/10 border-t border-white/10">
             {[
               [
-                "Do you print my RC brand's actual logo?",
-                "No. Brand names are set in our own bold display typography — never traced or copied from a manufacturer's trademarked logo artwork. It's a name-and-color livery, not licensed merch, and it isn't affiliated with or endorsed by the brands you pick.",
+                "DO YOU PRINT MY RC BRAND'S ACTUAL LOGO?",
+                "No. Brand names are set in our own bold display typography, never traced or copied from a manufacturer's trademarked logo artwork. It's a name-and-color livery, not licensed merch, and it isn't affiliated with or endorsed by the brands you pick.",
               ],
               [
-                "Why does adding more brands cost extra?",
-                `The first brand is included in the base price. Each additional one (up to ${MAX_BRANDS} total) is +${formatUsd(
-                  EXTRA_BRAND_PRICE_CENTS
-                )} — more names means a busier layout and more setup on our end.`,
+                "CAN I UPLOAD MY OWN SPONSOR LOGO?",
+                "Yes. The sponsor picker lets you add real RC brands from the dropdown, upload your own logo image, or mix both, up to 5 total. Uploaded logos get a colored frame that picks up your chosen palette.",
               ],
               [
-                "What's the difference between the two tee blanks?",
-                "Gildan Heavy Cotton (5000) is a classic mid-weight everyday tee. Comfort Colors 1717 is a heavier, garment-dyed blank with a softer, worn-in feel — it costs more because the blank itself does.",
+                "WHY DOES ADDING MORE SPONSORS COST EXTRA?",
+                `The first sponsor is included in the base price. Each additional one, up to ${MAX_SPONSORS} total, is +${formatUsd(
+                  EXTRA_SPONSOR_PRICE_CENTS
+                )}. More names means a busier layout and more setup on our end.`,
               ],
               [
-                "How long does production and shipping take?",
-                "Orders route straight to Printify's print-on-demand network. Typical production is 2–5 business days plus standard shipping — exact timing depends on the print provider your shop is connected to.",
+                "WHAT'S THE DIFFERENCE BETWEEN THE TWO TEE BLANKS?",
+                "Gildan Heavy Cotton (5000) is a classic mid-weight everyday tee. Comfort Colors 1717 is a heavier, garment-dyed blank with a softer, worn-in feel. It costs more because the blank itself does.",
+              ],
+              [
+                "HOW LONG DOES PRODUCTION AND SHIPPING TAKE?",
+                "Orders route straight to Printify's print-on-demand network. Typical production is 2 to 5 business days plus standard shipping. Exact timing depends on the print provider your shop is connected to.",
               ],
             ].map(([q, a]) => (
               <details key={q} className="group py-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between font-display text-base font-semibold uppercase tracking-wide text-chrome-300">
+                <summary className="flex cursor-pointer list-none items-center justify-between font-display text-base uppercase tracking-wide text-chrome-300">
                   {q}
                   <span className="ml-4 text-flame-500 transition group-open:rotate-45">+</span>
                 </summary>
@@ -288,17 +279,17 @@ export default function HomePage() {
         <div className="stripes absolute inset-0 opacity-60" />
         <div className="relative mx-auto flex max-w-3xl flex-col items-center px-5 text-center">
           <FlameMark className="h-10 w-10 text-flame-500" />
-          <h2 className="mt-4 font-display text-3xl font-bold uppercase tracking-tight text-chrome-300 sm:text-4xl">
-            Ready to build your livery?
+          <h2 className="mt-4 font-display text-3xl uppercase tracking-tight text-chrome-300 sm:text-4xl">
+            READY TO BUILD YOUR LIVERY?
           </h2>
           <p className="mt-3 max-w-md text-chrome-400">
-            Pick your brands, dial in your colors, see it on the shirt.
+            Pick your sponsors, dial in your colors, see it on the shirt.
           </p>
           <Link
             href="/design"
-            className="mt-8 rounded-sm bg-flame-500 px-8 py-4 font-display text-sm font-bold uppercase tracking-wider text-asphalt-950 shadow-glow transition hover:bg-flame-400"
+            className="mt-8 rounded-sm bg-flame-500 px-8 py-4 font-display uppercase tracking-wider text-asphalt-950 shadow-glow transition hover:bg-flame-400"
           >
-            Start Your Design →
+            START YOUR DESIGN →
           </Link>
         </div>
       </section>
@@ -311,30 +302,25 @@ export default function HomePage() {
 function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div className="max-w-2xl">
-      <span className="font-display text-xs font-bold uppercase tracking-[0.2em] text-flame-500">
-        {eyebrow}
-      </span>
-      <h2 className="mt-2 font-display text-3xl font-bold uppercase tracking-tight text-chrome-300 sm:text-4xl">
+      <span className="font-display text-xs uppercase tracking-[0.2em] text-flame-500">{eyebrow}</span>
+      <h2 className="mt-2 font-display text-3xl uppercase tracking-tight text-chrome-300 sm:text-4xl">
         {title}
       </h2>
     </div>
   );
 }
 
-function LiveryImg({
+function LiverySvg({
   primary,
   secondary,
-  brands,
-  tag,
+  sponsors,
   style,
 }: {
   primary: string;
   secondary: string;
-  brands: string[];
-  tag: string;
+  sponsors: SponsorItem[];
   style: LiveryStyle;
 }) {
-  const src = liverySvgDataUri({ primary, secondary, brands, tag, style, size: 400 });
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={`${brands.join(", ")} livery preview`} className="h-full w-full object-cover" />;
+  const svg = buildLiverySVG({ primary, secondary, sponsors, style });
+  return <div className="h-full w-full" dangerouslySetInnerHTML={{ __html: svg }} />;
 }

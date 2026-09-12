@@ -16,7 +16,7 @@ body {
   color: #f4f5f6;
 }
 
-/* Fine film-grain overlay — sits over every section so flat colors never
+/* Fine film-grain overlay, sits over every section so flat colors never
    read as a clean AI gradient. Pure CSS/SVG, no image asset. */
 .grain::before {
   content: "";
