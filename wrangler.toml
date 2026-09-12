@@ -4,8 +4,8 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
 
 # No database/storage bindings — this project is stateless (see README).
-# Set real secrets once you're ready to go live, via:
-#   npx wrangler pages secret put OPENAI_API_KEY --project-name=flameout-rc
+# The design generator runs client-side (no key needed). Set real Printify
+# secrets once you're ready to create real products, via:
 #   npx wrangler pages secret put PRINTIFY_API_KEY --project-name=flameout-rc
-# ...and the same for the other vars in .env.example. Until then the app
-# runs fully in demo mode (see lib/openai.ts / lib/printify.ts).
+# ...and the same for the other Printify vars in .env.example. Until then
+# "Send to Printify" resolves to a stub (see lib/printify.ts).

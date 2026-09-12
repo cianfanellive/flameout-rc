@@ -54,18 +54,19 @@ Push to `main` (or re-run step 2's commit/push) and GitHub Actions
 commit. Cloudflare gives you a free `https://flameout-rc.pages.dev`-style URL — no domain
 purchase required.
 
-## 5. Turn on real design generation / Printify (optional, any time later)
+## 5. Turn on real Printify order creation (optional, any time later)
 
-The site is fully browsable and the whole design flow works in **demo mode** with none of this —
-these just switch the placeholder graphics and the "Send to Printify" stub over to the real
-thing. Set each one you have as a Pages secret:
+The site is fully browsable and the whole design flow works in **demo mode** with none of this
+— the design step is 100% client-side already (see README.md); this just switches the "Send to
+Printify" stub over to actually creating the product. Set each one you have as a Pages secret:
 
 ```bash
-npx wrangler pages secret put OPENAI_API_KEY --project-name=flameout-rc
 npx wrangler pages secret put PRINTIFY_API_KEY --project-name=flameout-rc
 npx wrangler pages secret put PRINTIFY_SHOP_ID --project-name=flameout-rc
-npx wrangler pages secret put PRINTIFY_TSHIRT_BLUEPRINT_ID --project-name=flameout-rc
-npx wrangler pages secret put PRINTIFY_TSHIRT_PRINT_PROVIDER_ID --project-name=flameout-rc
+npx wrangler pages secret put PRINTIFY_TSHIRT_GILDAN_BLUEPRINT_ID --project-name=flameout-rc
+npx wrangler pages secret put PRINTIFY_TSHIRT_GILDAN_PRINT_PROVIDER_ID --project-name=flameout-rc
+npx wrangler pages secret put PRINTIFY_TSHIRT_COMFORT_BLUEPRINT_ID --project-name=flameout-rc
+npx wrangler pages secret put PRINTIFY_TSHIRT_COMFORT_PRINT_PROVIDER_ID --project-name=flameout-rc
 npx wrangler pages secret put PRINTIFY_CAP_BLUEPRINT_ID --project-name=flameout-rc
 npx wrangler pages secret put PRINTIFY_CAP_PRINT_PROVIDER_ID --project-name=flameout-rc
 ```
@@ -82,9 +83,9 @@ fully-working public URL.
 
 ## What makes this Cloudflare-compatible
 
-- Both API routes (`/api/generate-design`, `/api/printify/create-product`) declare
-  `export const runtime = "edge"`, which `@cloudflare/next-on-pages` requires — Cloudflare Pages
-  Functions run on Workers, not Node.
+- The one API route (`/api/printify/create-product`) declares `export const runtime = "edge"`,
+  which `@cloudflare/next-on-pages` requires — Cloudflare Pages Functions run on Workers, not
+  Node. The design generator itself runs client-side, so there's no route for it at all.
 - No database or file storage, so there's nothing to provision beyond the Pages project itself.
 - `.github/workflows/deploy.yml` runs the build on Ubuntu via GitHub Actions rather than
   depending on your local machine.
@@ -92,6 +93,6 @@ fully-working public URL.
 ## Verifying it worked
 
 1. Visit your `.pages.dev` URL — the homepage and livery gallery should render.
-2. Go to `/design`, generate a design (it'll show the demo-mode placeholder unless you've set
-   `OPENAI_API_KEY`), and click "Send to Printify" (shows the demo-mode stub unless you've set
-   the Printify secrets too).
+2. Go to `/design`, pick brands/colors/style (the preview updates live), continue to step 2,
+   and click "Send to Printify" (shows the demo-mode stub unless you've set the Printify
+   secrets).

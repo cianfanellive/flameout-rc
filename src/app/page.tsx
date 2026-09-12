@@ -3,6 +3,7 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { GarmentMockup } from "@/components/GarmentMockup";
 import { liverySvgDataUri, type LiveryStyle } from "@/lib/livery";
+import { EXTRA_BRAND_PRICE_CENTS, formatUsd, MAX_BRANDS } from "@/lib/pricing";
 import {
   BoltIcon,
   CheckeredFlagIcon,
@@ -15,18 +16,18 @@ import {
 const STEPS = [
   {
     icon: GaugeIcon,
-    title: "Tell us your rig",
-    body: "Brand, model, discipline — buggy, truck, drift, crawler, drone, nitro — plus your primary and secondary colors.",
+    title: "Pick your brands",
+    body: "Choose your rig's brand from the dropdown — Traxxas, ARRMA, Losi, and more. Add up to 5; each one past the first is +$5.",
   },
   {
     icon: BoltIcon,
-    title: "AI throws a livery",
-    body: "We turn your rig and colors into an original, print-ready graphic in seconds. Not a logo swap — a real design.",
+    title: "Dial in your colors",
+    body: "Pick a primary and secondary color and a livery style. The design updates live as you go — no waiting, no generating.",
   },
   {
     icon: ShirtIcon,
-    title: "Preview & lock it in",
-    body: "See it live on a tee or snapback mockup. Regenerate as many times as you want before you commit.",
+    title: "See it on the shirt",
+    body: "Step two shows the full tee or cap mockup with your design on it, plus the exact price before you commit to anything.",
   },
   {
     icon: TruckIcon,
@@ -37,38 +38,38 @@ const STEPS = [
 
 const FEATURES = [
   {
-    title: "One-off by design",
-    body: "Every graphic is generated fresh from your inputs. Nobody else at the track is wearing your shirt.",
+    title: "You're in control",
+    body: "No AI improvising your design — you pick the exact brands, colors, and layout, and see precisely what you'll get.",
   },
   {
     title: "Print-on-demand",
     body: "Nothing gets made until you order it. No dead stock, no clearance bin, no waste.",
   },
   {
-    title: "Built for two garments",
-    body: "Tees and structured snapback caps — the two things every pit box actually needs.",
+    title: "Real blanks, real choice",
+    body: "Gildan Heavy Cotton or Comfort Colors for tees — pick the weight and feel, the price adjusts to match.",
   },
   {
-    title: "No trademark headaches",
-    body: "AI is prompted to build original livery art inspired by your rig, not to reproduce a manufacturer's logo.",
+    title: "Typography, not bootleg logos",
+    body: "Brand names are set in our own display type, never traced manufacturer artwork — see the footer for the full note.",
   },
 ];
 
 const SHOWCASE: Array<{
   garment: "tee" | "cap";
   discipline: string;
-  text: string;
+  brands: string[];
   primary: string;
   secondary: string;
   style: LiveryStyle;
   garmentColor: "black" | "charcoal" | "white";
 }> = [
-  { garment: "tee", discipline: "1:10 BUGGY", text: "APEX 10", primary: "#ff5a1f", secondary: "#ffc400", style: "flame", garmentColor: "black" },
-  { garment: "cap", discipline: "SHORT COURSE TRUCK", text: "RIDGE 4X4", primary: "#ff2d2d", secondary: "#0a0c0f", style: "checkered", garmentColor: "black" },
-  { garment: "tee", discipline: "RC DRIFT", text: "NIGHT DRIFT", primary: "#7dd3fc", secondary: "#ff2d2d", style: "neon", garmentColor: "charcoal" },
-  { garment: "cap", discipline: "ROCK CRAWLER", text: "GRIT CRAWL", primary: "#c9ccd1", secondary: "#5b6470", style: "carbon", garmentColor: "black" },
-  { garment: "tee", discipline: "FPV DRONE", text: "REDOUT FPV", primary: "#ffd23f", secondary: "#ff5a1f", style: "retro", garmentColor: "charcoal" },
-  { garment: "cap", discipline: "NITRO ON-ROAD", text: "8500 RPM", primary: "#ff8a3d", secondary: "#ffc400", style: "flame", garmentColor: "charcoal" },
+  { garment: "tee", discipline: "1:10 BUGGY", brands: ["Traxxas"], primary: "#ff5a1f", secondary: "#ffc400", style: "flame", garmentColor: "black" },
+  { garment: "cap", discipline: "SHORT COURSE TRUCK", brands: ["Team Associated", "Losi"], primary: "#ff2d2d", secondary: "#0a0c0f", style: "checkered", garmentColor: "black" },
+  { garment: "tee", discipline: "RC DRIFT", brands: ["ARRMA"], primary: "#7dd3fc", secondary: "#ff2d2d", style: "neon", garmentColor: "charcoal" },
+  { garment: "cap", discipline: "ROCK CRAWLER", brands: ["Axial"], primary: "#c9ccd1", secondary: "#5b6470", style: "carbon", garmentColor: "black" },
+  { garment: "tee", discipline: "FPV DRONE", brands: ["Redcat Racing", "Pro-Line", "JConcepts"], primary: "#ffd23f", secondary: "#ff5a1f", style: "retro", garmentColor: "charcoal" },
+  { garment: "cap", discipline: "NITRO ON-ROAD", brands: ["Kyosho"], primary: "#ff8a3d", secondary: "#ffc400", style: "flame", garmentColor: "charcoal" },
 ];
 
 export default function HomePage() {
@@ -86,7 +87,7 @@ export default function HomePage() {
           <div className="flex flex-col justify-center">
             <span className="mb-5 inline-flex w-fit items-center gap-2 rounded-sm border border-flame-500/40 bg-flame-500/10 px-3 py-1 font-display text-xs font-bold uppercase tracking-widest text-flame-400">
               <CheckeredFlagIcon className="h-4 w-4" />
-              AI-designed · Print-on-demand
+              Pick your brands · Print-on-demand
             </span>
             <h1 className="font-display text-5xl font-bold uppercase leading-[0.98] tracking-tight text-chrome-300 sm:text-6xl md:text-7xl">
               Design your
@@ -96,9 +97,9 @@ export default function HomePage() {
               <span className="text-stroke">rig.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-chrome-400">
-              Give us your rig, your colors, your discipline. FlameoutRC
-              generates an original livery graphic and prints it one-off on a
-              tee or snapback — no minimums, no mass production.
+              Pick up to {MAX_BRANDS} RC brands, your colors, and a livery
+              style. See it update live, then see it on the shirt — printed
+              one-off on a tee or snapback, no minimums.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
@@ -117,10 +118,10 @@ export default function HomePage() {
 
             <dl className="mt-12 grid grid-cols-2 gap-6 border-t border-white/10 pt-8 sm:grid-cols-4">
               {[
-                ["~60s", "design time"],
-                ["1-of-1", "every print"],
+                ["Live", "instant preview"],
+                [`${MAX_BRANDS}`, "brands, max"],
                 ["2", "garments: tee + cap"],
-                ["0", "warehouse inventory"],
+                [`+${formatUsd(EXTRA_BRAND_PRICE_CENTS)}`, "per extra brand"],
               ].map(([value, label]) => (
                 <div key={label}>
                   <dt className="font-display text-2xl font-bold text-flame-400">{value}</dt>
@@ -136,7 +137,7 @@ export default function HomePage() {
                 <LiveryImg
                   primary="#ff5a1f"
                   secondary="#ffc400"
-                  text="APEX 10"
+                  brands={["Traxxas"]}
                   tag="1:10 BUGGY"
                   style="flame"
                 />
@@ -147,7 +148,7 @@ export default function HomePage() {
                 <LiveryImg
                   primary="#ff2d2d"
                   secondary="#0a0c0f"
-                  text="RIDGE"
+                  brands={["Team Associated", "Losi"]}
                   tag=""
                   style="checkered"
                 />
@@ -206,26 +207,26 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-5">
           <SectionHeading
             eyebrow="Livery Gallery"
-            title="Every discipline. Every color combo."
+            title="Every discipline. Every brand combo."
           />
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {SHOWCASE.map((item) => (
               <div
-                key={item.text}
+                key={item.brands.join("+")}
                 className="group rounded-md border border-white/10 bg-asphalt-800 p-6 shadow-panel transition hover:border-flame-500/40"
               >
                 <GarmentMockup garment={item.garment} garmentColor={item.garmentColor}>
                   <LiveryImg
                     primary={item.primary}
                     secondary={item.secondary}
-                    text={item.text}
+                    brands={item.brands}
                     tag={item.discipline}
                     style={item.style}
                   />
                 </GarmentMockup>
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex items-center justify-between gap-2">
                   <span className="font-display text-sm font-bold uppercase tracking-wide text-chrome-300">
-                    {item.text}
+                    {item.brands.join(" × ")}
                   </span>
                   <span className="font-display text-[11px] uppercase tracking-widest text-flame-400/80">
                     {item.discipline}
@@ -253,19 +254,21 @@ export default function HomePage() {
             {[
               [
                 "Do you print my RC brand's actual logo?",
-                "No. The AI is prompted to design original livery-style artwork inspired by your rig's name, colors, and discipline — not to trace or reproduce a manufacturer's trademarked logo. That keeps every design safe to sell.",
+                "No. Brand names are set in our own bold display typography — never traced or copied from a manufacturer's trademarked logo artwork. It's a name-and-color livery, not licensed merch, and it isn't affiliated with or endorsed by the brands you pick.",
+              ],
+              [
+                "Why does adding more brands cost extra?",
+                `The first brand is included in the base price. Each additional one (up to ${MAX_BRANDS} total) is +${formatUsd(
+                  EXTRA_BRAND_PRICE_CENTS
+                )} — more names means a busier layout and more setup on our end.`,
+              ],
+              [
+                "What's the difference between the two tee blanks?",
+                "Gildan Heavy Cotton (5000) is a classic mid-weight everyday tee. Comfort Colors 1717 is a heavier, garment-dyed blank with a softer, worn-in feel — it costs more because the blank itself does.",
               ],
               [
                 "How long does production and shipping take?",
                 "Orders route straight to Printify's print-on-demand network. Typical production is 2–5 business days plus standard shipping — exact timing depends on the print provider your shop is connected to.",
-              ],
-              [
-                "Can I regenerate the design if I don't love it?",
-                "Yes — regenerate as many times as you want before ordering. Nothing gets sent to production until you approve a design.",
-              ],
-              [
-                "What garments do you offer?",
-                "Two, on purpose: a classic tee and a structured snapback cap. Fewer SKUs, better quality control, faster turnaround.",
               ],
             ].map(([q, a]) => (
               <details key={q} className="group py-5">
@@ -289,7 +292,7 @@ export default function HomePage() {
             Ready to build your livery?
           </h2>
           <p className="mt-3 max-w-md text-chrome-400">
-            Sixty seconds and a color picker between you and pit-lane-worthy gear.
+            Pick your brands, dial in your colors, see it on the shirt.
           </p>
           <Link
             href="/design"
@@ -321,17 +324,17 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
 function LiveryImg({
   primary,
   secondary,
-  text,
+  brands,
   tag,
   style,
 }: {
   primary: string;
   secondary: string;
-  text: string;
+  brands: string[];
   tag: string;
   style: LiveryStyle;
 }) {
-  const src = liverySvgDataUri({ primary, secondary, text, tag, style, size: 400 });
+  const src = liverySvgDataUri({ primary, secondary, brands, tag, style, size: 400 });
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={`${text} livery preview`} className="h-full w-full object-cover" />;
+  return <img src={src} alt={`${brands.join(", ")} livery preview`} className="h-full w-full object-cover" />;
 }

@@ -1,106 +1,105 @@
 # FlameoutRC
 
-Custom RC-racing apparel, personalized per customer: tell us your rig, your
-colors, and your discipline, and an AI-generated livery graphic gets printed
-one-off on a tee or snapback cap through print-on-demand. Same playbook as
-sites like [OnPoint Graphix](https://opgfx.com/) run for team sportswear —
-personalize by description, print nothing until it's ordered — applied to
-the RC hobby instead of school sports.
+Custom RC-racing apparel, personalized by picking — not by an AI improvising: a customer
+chooses up to 5 real RC brands, a primary/secondary color, and a livery style, watches the
+design update live, then sees it on a tee or snapback cap before it prints one-off through
+Printify. Same "personalize by picking, print nothing until it's ordered" playbook as
+[OnPoint Graphix](https://opgfx.com/) runs for team sportswear, applied to the RC hobby.
 
-Next.js 15 / TypeScript / Tailwind, no database — this is a marketing site +
-a design-and-fulfillment flow, not a full storefront/checkout (see
-[What's stubbed](#whats-real-vs-stubbed) below).
+Next.js 15 / TypeScript / Tailwind, no database — this is a marketing site + a design-and-
+fulfillment flow, not a full storefront/checkout (see [What's stubbed](#whats-real-vs-stubbed)
+below).
 
 ## The flow
 
-1. **Landing page** (`/`) — brand story, "how it works," and a livery
-   gallery, all rendered from the same SVG livery generator the design tool
-   uses (`src/lib/livery.ts`), so the gallery always matches what a real
-   generation looks like.
-2. **Designer** (`/design`) — customer picks garment (tee/cap), RC
-   discipline, rig brand/model, two colors, a design style, and optional
-   extra direction. "Generate Design" calls `/api/generate-design`.
-3. **`/api/generate-design`** builds a prompt (`src/lib/prompt.ts`) and calls
-   OpenAI's Images API (`gpt-image-1`) to produce a print-ready, transparent-
-   background graphic (`src/lib/openai.ts`).
-4. **"Send to Printify"** calls `/api/printify/create-product`
-   (`src/lib/printify.ts`), which uploads the artwork and creates a draft
-   product in your Printify shop (tee or cap, per the blueprint/print
-   provider you've configured).
+1. **Landing page** (`/`) — brand story, "how it works," and a livery gallery, all rendered
+   from the same generator the design tool uses (`src/lib/livery.ts`).
+2. **Designer, step 1** (`/design`) — customer picks garment (tee/cap), a tee blank (Gildan
+   Heavy Cotton or Comfort Colors — different price), RC discipline, up to 5 RC brands
+   (`src/lib/brands.ts`), two colors, and a design style. The design preview updates
+   **instantly** — it's a pure client-side SVG render (`liverySvgDataUri`), no server round
+   trip, no AI call, no loading spinner.
+3. **Designer, step 2** — the same design shown on a full tee/cap mockup, with a live price
+   breakdown (`src/lib/pricing.ts`): base price for the chosen blank/garment, plus $5 per RC
+   brand past the first.
+4. **"Send to Printify"** calls `/api/printify/create-product` (`src/lib/printify.ts`), which
+   uploads the artwork and creates a draft product in your Printify shop — the right
+   blueprint/print-provider for the garment+blank combo chosen. Price is **recomputed
+   server-side** from garment/blank/brand-count, never trusted from the client.
+
+## Why it's not AI-generated
+
+Earlier drafts of this piped the design through an image-generation model. This version
+doesn't — the "livery" is deterministic layout + typography (`src/lib/livery.ts`): checkered
+corners, carbon plate, neon lines, flame glow, or retro stripes as a background, with the
+brand name(s) set in a bold display face on top. One brand renders as a big centered wordmark;
+2-5 renders as a stacked sponsor-panel board, alternating colors per line — which is also just
+what a real RC pit-lane livery looks like. It's cheaper to run (no per-generation API cost),
+instant (no generation latency), and safer to sell (see the trademark note below).
 
 ## Local dev
 
 ```bash
 npm install
-cp .env.example .env.local   # optional — see below
 npm run dev
 ```
 
-**You don't need any API keys to try the whole flow.** Without
-`OPENAI_API_KEY`, design generation falls back to a locally-built placeholder
-graphic in the chosen colors/style (`src/lib/livery.ts`) — same visual
-language as the gallery, just not AI-improvised. Without the Printify
-env vars, "Send to Printify" returns a stub showing exactly what payload
-*would* have been sent. Every response carries a `stubbed: true` flag the
-UI surfaces as a small banner, so it's always obvious which mode you're in.
+**You don't need any API keys to try the whole flow.** The design step is 100% local/client-
+side. Only "Send to Printify" needs real credentials — without them it returns a stub showing
+exactly what payload *would* have been sent, flagged `stubbed: true` and surfaced in the UI as
+a small banner.
 
-## Wiring up the real integrations
+## Wiring up real Printify orders
 
-**OpenAI** — set `OPENAI_API_KEY` (needs Images API / `gpt-image-1` access).
-That's the only step; `lib/openai.ts` switches from placeholder to real
-generation automatically.
+You need, per garment you want to actually create:
 
-**Printify** — you need, per garment you want to actually create:
+1. An API token and shop id from your Printify account (`PRINTIFY_API_KEY`, `PRINTIFY_SHOP_ID`).
+2. A blueprint + print provider pair for each of the three sellable garments — pick one in the
+   [Printify catalog](https://developers.printify.com/#catalog) (e.g. Gildan 5000 for the
+   Gildan tee option, Comfort Colors 1717 for the other tee option, a Yupoong 6089M for the
+   cap) and note both IDs into the matching vars in `.env.example`.
 
-1. An API token and shop id from your Printify account
-   (`PRINTIFY_API_KEY`, `PRINTIFY_SHOP_ID`).
-2. A blueprint + print provider pair for that garment — pick one in the
-   [Printify catalog](https://developers.printify.com/#catalog) (e.g. a
-   Bella+Canvas 3001 tee, a Yupoong 6089M cap) and note both IDs into
-   `PRINTIFY_TSHIRT_BLUEPRINT_ID` / `PRINTIFY_TSHIRT_PRINT_PROVIDER_ID` (and
-   the `_CAP_` equivalents).
-
-Creating the product is **not** the same as being able to sell it — Printify
-still needs a connected sales channel (Shopify, Etsy, WooCommerce, or its
-own Pop-Up Store) before a customer can actually check out. This project
-stops at "draft product created in your Printify shop"; wire up a channel
-(and, if you want it on this domain, embed or link to it) as a next step.
+Creating the product is **not** the same as being able to sell it — Printify still needs a
+connected sales channel (Shopify, Etsy, WooCommerce, or its own Pop-Up Store) before a customer
+can actually check out. This project stops at "draft product created in your Printify shop";
+wire up a channel as a next step.
 
 ## What's real vs. stubbed
 
-- **Real**: the landing page, the customizer UI, prompt construction, the
-  OpenAI Images call, and the three-call Printify product-creation sequence
-  (upload artwork → look up variant ids → create product).
+- **Real**: the landing page, the two-step customizer, the live client-side design generator,
+  the pricing math (base price by blank + $5/extra brand, recomputed server-side), and the
+  three-call Printify product-creation sequence (upload artwork → look up variant ids → create
+  product).
 - **Stubbed / not attempted** (no accounts available to this build):
-  - Actual OpenAI and Printify API keys/shop setup — needs your accounts.
-  - Checkout — Printify doesn't take payment itself; you need a connected
-    storefront. Not chosen or wired up here.
-  - Persisting orders/designs anywhere (no database yet) — a generated
-    design only lives in the browser tab until you send it to Printify.
+  - Actual Printify API key/shop setup — needs your account.
+  - Checkout — Printify doesn't take payment itself; you need a connected storefront. Not
+    chosen or wired up here.
+  - Persisting orders/designs anywhere (no database yet) — a design only lives in the browser
+    tab until you send it to Printify.
   - Auth/accounts, order history, email confirmations.
   - Domain purchase, trademark clearance for the "FlameoutRC" name.
 
 ## A note on trademarks
 
-Customers type in real RC manufacturer/model names ("Traxxas Slash," "Team
-Associated RC10," etc.) to personalize their design — same idea as putting a
-name and number on a jersey. The prompt sent to the image model
-(`src/lib/prompt.ts`) explicitly instructs it to build **original** livery
-art inspired by that input, not to reproduce a manufacturer's actual logo or
-an existing team's registered livery. Worth a proper legal read before a
-real commercial launch, especially if you ever let customers upload their
-own reference images.
+The brand picker (`src/lib/brands.ts`) lists real RC manufacturer names — Traxxas, Team
+Associated, ARRMA, and so on — because that's the point: a customer's shirt should say what
+rig they run. Two things keep that from being a straightforward reproduction of someone else's
+trademark: the names are always rendered in this site's own display typography, and never as
+copied logo artwork, and every page carries a visible "not affiliated with or endorsed by"
+disclaimer. That said, using a manufacturer's name commercially on merchandise is still a real
+trademark question — nominative use (naming whose product something is compatible with/for) is
+a recognized defense, but it isn't a blanket pass, and it varies by jurisdiction. **Get an
+actual legal read before a real commercial launch**, especially before printing anything beyond
+plain brand-name typography.
 
 ## Deploying
 
 No database, so this deploys anywhere Next.js does:
 
 - **Vercel** — simplest, `next build` works as-is out of the box.
-- **Cloudflare Pages** — free, via GitHub Actions. See
-  [`DEPLOY.md`](./DEPLOY.md) for the exact one-time commands (mirrors the
-  sibling `ExtremeRC`/`PortalBrasilTeam`/`forthechildrencostarica` projects'
-  setup); both API routes already declare `export const runtime = "edge"`
-  as `@cloudflare/next-on-pages` requires.
+- **Cloudflare Pages** — free, via GitHub Actions. See [`DEPLOY.md`](./DEPLOY.md) for the exact
+  one-time commands; both API routes already declare `export const runtime = "edge"` as
+  `@cloudflare/next-on-pages` requires.
 
-Either way, set the env vars from `.env.example` on the host before you flip
-on real OpenAI/Printify calls.
+Either way, set the Printify env vars from `.env.example` on the host before you flip on real
+order creation.

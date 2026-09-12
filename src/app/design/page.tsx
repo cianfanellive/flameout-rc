@@ -20,8 +20,8 @@ export default function DesignPage() {
               Your rig. Your colors. Your gear.
             </h1>
             <p className="mt-2 text-sm text-chrome-400">
-              Fill this out, hit generate, and regenerate as many times as you
-              want — nothing gets printed until you say go.
+              Pick your brands and colors, see it update live, then see it on
+              the shirt — nothing gets printed until you say go.
             </p>
           </div>
           <DesignerClient />

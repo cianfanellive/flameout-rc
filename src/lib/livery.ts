@@ -1,17 +1,24 @@
-// Deterministic, layout-based "livery" graphic generator.
+// Deterministic, layout-based "sponsor board" graphic generator.
 //
-// This is what /api/generate-design falls back to when OPENAI_API_KEY isn't
-// set (see lib/openai.ts), and it's also what powers the static showcase
-// gallery on the landing page — so a visitor without any API keys configured
-// still sees the exact visual language a real generation would produce,
-// just without the AI improvisation. Pure SVG, no external assets/fonts.
+// This is the actual design engine — not a placeholder for something AI
+// would otherwise produce. Given the RC brand names, colors, and style a
+// customer picks, it renders a print-ready graphic entirely from typography
+// and vector shapes (checkered corners, carbon plate, neon lines, flame
+// glow, retro stripes). No photos, no logos, no AI model in the loop —
+// which is also why it's safe to run: it's brand *names* set in a bold
+// display face, never a manufacturer's actual trademarked artwork.
+//
+// Runs identically in the browser (live preview as the customer picks
+// options) and on the server (Printify product creation) — pure functions,
+// no Node-only APIs.
 
 export type LiveryStyle = "flame" | "neon" | "carbon" | "checkered" | "retro";
 
 export interface LiveryOptions {
   primary: string;
   secondary: string;
-  text: string;
+  /** 1-5 RC brand names, in the order the customer picked them. */
+  brands: string[];
   tag?: string;
   style?: LiveryStyle;
   size?: number;
@@ -28,12 +35,12 @@ function escapeXml(input: string): string {
 
 function fitText(raw: string, max = 20): string {
   const trimmed = raw.trim();
-  if (!trimmed) return "YOUR RIG";
+  if (!trimmed) return "";
   return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed;
 }
 
-// Wide fixed-width text at a single font size clips or overflows once a rig
-// name runs long, so scale down in tiers instead of guessing one size.
+// Wide fixed-width text at a single font size clips or overflows once a
+// brand name runs long, so scale down in tiers instead of guessing one size.
 function fitFontSize(text: string): number {
   const len = text.length;
   if (len <= 6) return 92;
@@ -59,10 +66,50 @@ const CARBON = (id: string, base: string) => `
 const FLAME_PATH =
   "M120 8c8 26-6 42-22 60-24 26-50 56-50 96 0 38 30 68 68 68 5 0 10-1 14-2-9-8-15-19-15-32 0-24 18-36 32-50 2 12 8 20 16 30 12 14 25 29 25 51 0 38-30 68-68 68-64 0-114-50-114-118 0-72 52-112 88-148 8-8 14-16 26-23z";
 
+// A single brand reads as a big centered wordmark; 2+ reads as a stacked
+// sponsor-panel board (exactly what a real RC pit-lane livery looks like),
+// alternating primary/secondary per line so each name reads as its own
+// "sticker" rather than a wall of same-colored text.
+function renderBrandBlock(
+  brands: string[],
+  primary: string,
+  secondary: string,
+  textFill: string,
+  textStroke: string
+): string {
+  const names = (brands.length ? brands : ["YOUR BRAND"]).slice(0, 5);
+
+  if (names.length === 1) {
+    const t = fitText(names[0]);
+    const safe = escapeXml(t.toUpperCase());
+    return `<text x="400" y="580" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-size="${fitFontSize(
+      t
+    )}" letter-spacing="2" fill="${textFill}" stroke="${textStroke}" stroke-width="2" paint-order="stroke">${safe}</text>`;
+  }
+
+  const fontSize = names.length <= 3 ? 54 : names.length === 4 ? 46 : 40;
+  const gap = fontSize * 1.45;
+  const totalHeight = gap * (names.length - 1);
+  const startY = 560 - totalHeight / 2;
+
+  return names
+    .map((raw, i) => {
+      const t = fitText(raw, 18);
+      const safe = escapeXml(t.toUpperCase());
+      const fill = i % 2 === 0 ? textFill : secondary;
+      const markerFill = i % 2 === 0 ? secondary : primary;
+      const y = startY + i * gap;
+      return `
+        <rect x="228" y="${y - fontSize * 0.72}" width="10" height="10" fill="${markerFill}" transform="rotate(45 233 ${
+        y - fontSize * 0.67
+      })" />
+        <text x="400" y="${y}" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-size="${fontSize}" letter-spacing="1.5" fill="${fill}" stroke="${textStroke}" stroke-width="1.4" paint-order="stroke">${safe}</text>`;
+    })
+    .join("");
+}
+
 export function buildLiverySVG(opts: LiveryOptions): string {
   const { primary, secondary, tag = "", style = "flame", size = 800 } = opts;
-  const text = fitText(opts.text);
-  const safeText = escapeXml(text.toUpperCase());
   const safeTag = escapeXml(tag.toUpperCase());
   const uid = Math.random().toString(36).slice(2, 8);
 
@@ -146,9 +193,7 @@ export function buildLiverySVG(opts: LiveryOptions): string {
     <rect width="800" height="800" fill="none" />
     ${mid}
     <g>
-      <text x="400" y="580" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-size="${fitFontSize(
-        text
-      )}" letter-spacing="2" fill="${textFill}" stroke="${textStroke}" stroke-width="2" paint-order="stroke">${safeText}</text>
+      ${renderBrandBlock(opts.brands, primary, secondary, textFill, textStroke)}
     </g>
     ${tagPill}
   </svg>`;
@@ -161,10 +206,10 @@ export function liverySvgDataUri(opts: LiveryOptions): string {
   return `data:image/svg+xml;base64,${toBase64Utf8(svg)}`;
 }
 
-// Works identically under Node (local dev/build) and the Workers edge
-// runtime (Cloudflare Pages) without depending on the Node `Buffer` global
-// or its nodejs_compat polyfill — plain `btoa` only handles Latin1, so we
-// widen each byte through TextEncoder first.
+// Works identically under Node (local dev/build), the browser (client-side
+// live preview), and the Workers edge runtime (Cloudflare Pages) — plain
+// `btoa` only handles Latin1, so we widen each byte through TextEncoder
+// first rather than reaching for the Node-only `Buffer`.
 function toBase64Utf8(str: string): string {
   const bytes = new TextEncoder().encode(str);
   let binary = "";

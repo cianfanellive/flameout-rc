@@ -10,23 +10,6 @@ export type Discipline =
 
 export type DesignStyle = "flame" | "neon" | "carbon" | "checkered" | "retro";
 
-export interface DesignRequest {
-  garment: Garment;
-  discipline: Discipline;
-  rig: string;
-  primary: string;
-  secondary: string;
-  style: DesignStyle;
-  details?: string;
-}
-
-export interface GeneratedDesign {
-  imageDataUrl: string;
-  prompt: string;
-  stubbed: boolean;
-  note?: string;
-}
-
 export interface PrintifyCreateResult {
   stubbed: boolean;
   productId?: string;

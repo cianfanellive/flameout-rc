@@ -75,8 +75,8 @@ export function Footer() {
         <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-chrome-400/70 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} FlameoutRC. Not affiliated with any RC manufacturer.</p>
           <p>
-            Designs are AI-generated original artwork inspired by your rig — not
-            reproductions of third-party logos or team liveries.
+            Brand names are shown in our own typography, not reproduced
+            logos — not licensed or endorsed by any manufacturer listed.
           </p>
         </div>
       </div>

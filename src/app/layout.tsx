@@ -19,7 +19,7 @@ const body = Inter({
 export const metadata: Metadata = {
   title: "FLAMEOUT RC — Custom RC Racing Apparel",
   description:
-    "Tell us your rig, your colors, your discipline. FLAMEOUT throws an AI-generated livery on a tee or cap and ships it print-on-demand. No minimums, no mass production — one-off gear for the RC obsessed.",
+    "Pick up to 5 RC brands, your colors, and a livery style. See it live, then see it on the shirt or cap — printed one-off via Printify. No minimums, no mass production.",
 };
 
 export default function RootLayout({
