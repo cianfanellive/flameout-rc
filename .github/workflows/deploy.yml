@@ -1,0 +1,43 @@
+name: Deploy to Cloudflare Pages
+
+# Runs the @cloudflare/next-on-pages build on Linux and deploys the result
+# to Cloudflare Pages. Requires two repo secrets, set once under
+# Settings -> Secrets and variables -> Actions:
+#   CLOUDFLARE_API_TOKEN   (Cloudflare dashboard -> My Profile -> API Tokens
+#                           -> Create Token -> "Edit Cloudflare Workers" template)
+#   CLOUDFLARE_ACCOUNT_ID  (Cloudflare dashboard, right sidebar of any zone,
+#                           or `npx wrangler whoami`)
+# See DEPLOY.md for the full one-time setup.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for Cloudflare Pages
+        run: npx @cloudflare/next-on-pages
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: flameout-rc
+          directory: .vercel/output/static
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

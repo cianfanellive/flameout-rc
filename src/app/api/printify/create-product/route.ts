@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createPrintifyProduct } from "@/lib/printify";
 import type { Garment } from "@/lib/types";
 
+// Required by @cloudflare/next-on-pages — see generate-design/route.ts.
+export const runtime = "edge";
+
 const GARMENTS: Garment[] = ["tee", "cap"];
 
 export async function POST(request: Request) {

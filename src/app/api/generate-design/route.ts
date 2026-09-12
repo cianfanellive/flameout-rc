@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { generateDesign } from "@/lib/openai";
 import type { DesignRequest, Discipline, DesignStyle, Garment } from "@/lib/types";
 
+// Required by @cloudflare/next-on-pages: Cloudflare Pages Functions run on
+// Workers, not Node, so every dynamic route needs the edge runtime.
+export const runtime = "edge";
+
 const GARMENTS: Garment[] = ["tee", "cap"];
 const DISCIPLINES: Discipline[] = [
   "buggy",

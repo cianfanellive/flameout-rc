@@ -96,9 +96,11 @@ own reference images.
 No database, so this deploys anywhere Next.js does:
 
 - **Vercel** — simplest, `next build` works as-is out of the box.
-- **Cloudflare Pages** — `npm run cf:build` / `cf:deploy` are wired up
-  (mirrors the sibling `ExtremeRC`/`PortalBrasilTeam`/`forthechildrencostarica`
-  projects), no D1/R2 needed since there's no database.
+- **Cloudflare Pages** — free, via GitHub Actions. See
+  [`DEPLOY.md`](./DEPLOY.md) for the exact one-time commands (mirrors the
+  sibling `ExtremeRC`/`PortalBrasilTeam`/`forthechildrencostarica` projects'
+  setup); both API routes already declare `export const runtime = "edge"`
+  as `@cloudflare/next-on-pages` requires.
 
 Either way, set the env vars from `.env.example` on the host before you flip
 on real OpenAI/Printify calls.

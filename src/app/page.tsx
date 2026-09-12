@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { GarmentMockup } from "@/components/GarmentMockup";
-import { buildLiverySVG, type LiveryStyle } from "@/lib/livery";
+import { liverySvgDataUri, type LiveryStyle } from "@/lib/livery";
 import {
   BoltIcon,
   CheckeredFlagIcon,
@@ -331,8 +331,7 @@ function LiveryImg({
   tag: string;
   style: LiveryStyle;
 }) {
-  const svg = buildLiverySVG({ primary, secondary, text, tag, style, size: 400 });
-  const src = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+  const src = liverySvgDataUri({ primary, secondary, text, tag, style, size: 400 });
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={src} alt={`${text} livery preview`} className="h-full w-full object-cover" />;
 }

@@ -158,9 +158,16 @@ export function buildLiverySVG(opts: LiveryOptions): string {
 
 export function liverySvgDataUri(opts: LiveryOptions): string {
   const svg = buildLiverySVG(opts);
-  const base64 =
-    typeof Buffer !== "undefined"
-      ? Buffer.from(svg, "utf-8").toString("base64")
-      : btoa(svg);
-  return `data:image/svg+xml;base64,${base64}`;
+  return `data:image/svg+xml;base64,${toBase64Utf8(svg)}`;
+}
+
+// Works identically under Node (local dev/build) and the Workers edge
+// runtime (Cloudflare Pages) without depending on the Node `Buffer` global
+// or its nodejs_compat polyfill — plain `btoa` only handles Latin1, so we
+// widen each byte through TextEncoder first.
+function toBase64Utf8(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
 }

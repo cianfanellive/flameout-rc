@@ -1,0 +1,11 @@
+name = "flameout-rc"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+# No database/storage bindings — this project is stateless (see README).
+# Set real secrets once you're ready to go live, via:
+#   npx wrangler pages secret put OPENAI_API_KEY --project-name=flameout-rc
+#   npx wrangler pages secret put PRINTIFY_API_KEY --project-name=flameout-rc
+# ...and the same for the other vars in .env.example. Until then the app
+# runs fully in demo mode (see lib/openai.ts / lib/printify.ts).
