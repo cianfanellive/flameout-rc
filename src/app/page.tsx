@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
-import { GarmentMockup } from "@/components/GarmentMockup";
-import { buildLiverySVG, type LiveryStyle, type SponsorItem } from "@/lib/livery";
-import { EXTRA_SPONSOR_PRICE_CENTS, formatUsd, INCLUDED_SPONSORS, MAX_SPONSORS } from "@/lib/pricing";
+import { GarmentMockup, type ShirtColorId } from "@/components/GarmentMockup";
+import { buildLiverySVG, type GraphicId, type SponsorItem } from "@/lib/livery";
+import { EXTRA_SPONSOR_PRICE_CENTS, formatUsd, INCLUDED_SPONSORS, MAX_SPONSORS, TEE_BLANK_LABEL } from "@/lib/pricing";
 import {
   BoltIcon,
   CheckeredFlagIcon,
@@ -24,12 +24,12 @@ const STEPS = [
   {
     icon: BoltIcon,
     title: "DIAL IN THE LOOK",
-    body: "Colors, a livery style, and one of 20 fonts. The design updates live as you go, no waiting, no generating.",
+    body: "Three colors, a font, and one of 5 graphic templates. The design updates live as you go, no waiting, no generating.",
   },
   {
     icon: ShirtIcon,
     title: "SEE IT ON THE SHIRT",
-    body: "The full tee or cap mockup updates instantly, with the exact price shown before you commit to anything.",
+    body: "The full tee or cap mockup updates instantly, in your shirt color, with the exact price shown before you commit.",
   },
   {
     icon: TruckIcon,
@@ -48,8 +48,8 @@ const FEATURES = [
     body: "Bar, outline, or badge for your driver name and car number, set in a real font, not a generic default.",
   },
   {
-    title: "REAL BLANKS, REAL CHOICE",
-    body: "Gildan Heavy Cotton or Comfort Colors for tees. Pick the weight and feel, the price adjusts to match.",
+    title: "COMFORT COLORS, 5 COLORWAYS",
+    body: `Every tee is ${TEE_BLANK_LABEL}, a heavier, garment-dyed blank, in your pick of 5 shirt colors.`,
   },
   {
     title: "TYPOGRAPHY, NOT BOOTLEG LOGOS",
@@ -63,15 +63,16 @@ const SHOWCASE: Array<{
   sponsors: SponsorItem[];
   primary: string;
   secondary: string;
-  style: LiveryStyle;
-  garmentColor: "black" | "charcoal" | "white";
+  tertiary: string;
+  graphic: GraphicId;
+  garmentColor: ShirtColorId;
 }> = [
-  { garment: "tee", label: "TRAXXAS", sponsors: [{ kind: "text", label: "Traxxas" }], primary: "#ff5a1f", secondary: "#ffc400", style: "flame", garmentColor: "black" },
-  { garment: "cap", label: "TEAM ASSOCIATED x LOSI", sponsors: [{ kind: "text", label: "Team Associated" }, { kind: "text", label: "Losi" }], primary: "#ff2d2d", secondary: "#0a0c0f", style: "checkered", garmentColor: "black" },
-  { garment: "tee", label: "ARRMA", sponsors: [{ kind: "text", label: "ARRMA" }], primary: "#7dd3fc", secondary: "#ff2d2d", style: "neon", garmentColor: "charcoal" },
-  { garment: "cap", label: "AXIAL", sponsors: [{ kind: "text", label: "Axial" }], primary: "#c9ccd1", secondary: "#5b6470", style: "carbon", garmentColor: "black" },
-  { garment: "tee", label: "REDCAT x PRO-LINE x JCONCEPTS", sponsors: [{ kind: "text", label: "Redcat Racing" }, { kind: "text", label: "Pro-Line" }, { kind: "text", label: "JConcepts" }], primary: "#ffd23f", secondary: "#ff5a1f", style: "retro", garmentColor: "charcoal" },
-  { garment: "cap", label: "KYOSHO", sponsors: [{ kind: "text", label: "Kyosho" }], primary: "#ff8a3d", secondary: "#ffc400", style: "flame", garmentColor: "charcoal" },
+  { garment: "tee", label: "TRAXXAS", sponsors: [{ kind: "text", label: "Traxxas" }], primary: "#ff5a1f", secondary: "#ffc400", tertiary: "#0a0c0f", graphic: "star", garmentColor: "black" },
+  { garment: "cap", label: "TEAM ASSOCIATED x LOSI", sponsors: [{ kind: "text", label: "Team Associated" }, { kind: "text", label: "Losi" }], primary: "#ff2d2d", secondary: "#0a0c0f", tertiary: "#f4f5f6", graphic: "grid", garmentColor: "black" },
+  { garment: "tee", label: "ARRMA", sponsors: [{ kind: "text", label: "ARRMA" }], primary: "#7dd3fc", secondary: "#ff2d2d", tertiary: "#0a0c0f", graphic: "bolt", garmentColor: "navy" },
+  { garment: "cap", label: "AXIAL", sponsors: [{ kind: "text", label: "Axial" }], primary: "#c9ccd1", secondary: "#5b6470", tertiary: "#0a0c0f", graphic: "shield", garmentColor: "grey" },
+  { garment: "tee", label: "REDCAT x PRO-LINE x JCONCEPTS", sponsors: [{ kind: "text", label: "Redcat Racing" }, { kind: "text", label: "Pro-Line" }, { kind: "text", label: "JConcepts" }], primary: "#ffd23f", secondary: "#ff5a1f", tertiary: "#0a0c0f", graphic: "spear", garmentColor: "red" },
+  { garment: "cap", label: "KYOSHO", sponsors: [{ kind: "text", label: "Kyosho" }], primary: "#ff8a3d", secondary: "#ffc400", tertiary: "#0a0c0f", graphic: "star", garmentColor: "white" },
 ];
 
 export default function HomePage() {
@@ -106,9 +107,9 @@ export default function HomePage() {
               <span className="text-stroke">rig.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-chrome-400">
-              Pick up to {MAX_SPONSORS} RC brands or upload your own logos, your colors, a
-              livery style, and a font. See it update live, then see it on the shirt, printed
-              one-off on a tee or snapback. No minimums.
+              Pick up to {MAX_SPONSORS} RC brands or upload your own logos, three colors, a
+              font, and a graphic template. See it update live, then see it on the shirt,
+              printed one-off on a tee or snapback. No minimums.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
@@ -129,7 +130,7 @@ export default function HomePage() {
               {[
                 ["LIVE", "INSTANT PREVIEW"],
                 [`${MAX_SPONSORS}`, "SPONSORS, MAX"],
-                ["20", "FONTS TO PICK FROM"],
+                ["5", "SHIRT COLORS"],
                 [`+${formatUsd(EXTRA_SPONSOR_PRICE_CENTS)}`, "PER EXTRA SPONSOR"],
               ].map(([value, label]) => (
                 <div key={label}>
@@ -146,18 +147,20 @@ export default function HomePage() {
                 <LiverySvg
                   primary="#ff5a1f"
                   secondary="#ffc400"
+                  tertiary="#0a0c0f"
                   sponsors={[{ kind: "text", label: "Traxxas" }]}
-                  style="flame"
+                  graphic="star"
                 />
               </GarmentMockup>
             </div>
             <div className="absolute -bottom-4 -left-2 w-[42%] -rotate-[6deg] drop-shadow-2xl">
-              <GarmentMockup garment="cap" garmentColor="charcoal">
+              <GarmentMockup garment="cap" garmentColor="grey">
                 <LiverySvg
                   primary="#ff2d2d"
                   secondary="#0a0c0f"
+                  tertiary="#f4f5f6"
                   sponsors={[{ kind: "text", label: "Team Associated" }, { kind: "text", label: "Losi" }]}
-                  style="checkered"
+                  graphic="grid"
                 />
               </GarmentMockup>
             </div>
@@ -208,7 +211,7 @@ export default function HomePage() {
       {/* ── SHOWCASE ─────────────────────────────────────────────────── */}
       <section id="showcase" className="border-b border-white/10 bg-asphalt-950 py-20">
         <div className="mx-auto max-w-6xl px-5">
-          <SectionHeading eyebrow="LIVERY GALLERY" title="EVERY SPONSOR COMBO. EVERY STYLE." />
+          <SectionHeading eyebrow="LIVERY GALLERY" title="EVERY SPONSOR COMBO. EVERY GRAPHIC." />
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {SHOWCASE.map((item) => (
               <div
@@ -219,8 +222,9 @@ export default function HomePage() {
                   <LiverySvg
                     primary={item.primary}
                     secondary={item.secondary}
+                    tertiary={item.tertiary}
                     sponsors={item.sponsors}
-                    style={item.style}
+                    graphic={item.graphic}
                   />
                 </GarmentMockup>
                 <div className="mt-4">
@@ -263,8 +267,8 @@ export default function HomePage() {
                 )}. More names means a busier layout and more setup on our end.`,
               ],
               [
-                "WHAT'S THE DIFFERENCE BETWEEN THE TWO TEE BLANKS?",
-                "Gildan Heavy Cotton (5000) is a classic mid-weight everyday tee. Comfort Colors 1717 is a heavier, garment-dyed blank with a softer, worn-in feel. It costs more because the blank itself does.",
+                "WHAT TEE DO YOU USE, AND WHAT COLORS?",
+                `Every tee is ${TEE_BLANK_LABEL}, a heavier, garment-dyed blank with a soft, worn-in feel, offered in 5 shirt colors: Black, White, True Navy, Crimson, and Granite.`,
               ],
               [
                 "HOW LONG DOES PRODUCTION AND SHIPPING TAKE?",
@@ -322,14 +326,16 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
 function LiverySvg({
   primary,
   secondary,
+  tertiary,
   sponsors,
-  style,
+  graphic,
 }: {
   primary: string;
   secondary: string;
+  tertiary: string;
   sponsors: SponsorItem[];
-  style: LiveryStyle;
+  graphic: GraphicId;
 }) {
-  const svg = buildLiverySVG({ primary, secondary, sponsors, style });
+  const svg = buildLiverySVG({ primary, secondary, tertiary, sponsors, graphic });
   return <div className="h-full w-full" dangerouslySetInnerHTML={{ __html: svg }} />;
 }

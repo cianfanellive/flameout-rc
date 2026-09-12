@@ -1,11 +1,12 @@
 # FlameoutRC
 
 Custom RC-racing apparel, personalized by picking, not by an AI improvising: a customer picks
-up to 5 sponsors (real RC brands from a dropdown, or their own uploaded logo), a primary and
-secondary color, a livery style, one of 20 fonts, and an optional driver name/car number tag,
-watches the design update live, then sees it on a tee or snapback cap before it prints one-off
-through Printify. Same "personalize by picking, print nothing until it's ordered" playbook as
-[OnPoint Graphix](https://opgfx.com/) runs for team sportswear, applied to the RC hobby.
+up to 10 sponsors (real RC brands from a dropdown, or their own uploaded logo), three colors,
+a font, one of 5 graphic templates, and an optional driver name/car number tag, watches the
+design update live, then sees it on a tee or snapback cap in their pick of 5 shirt colors
+before it prints one-off through Printify. Same "personalize by picking, print nothing until
+it's ordered" playbook as [OnPoint Graphix](https://opgfx.com/) runs for team sportswear,
+applied to the RC hobby.
 
 Next.js 15 / TypeScript / Tailwind, no database, this is a marketing site plus a design-and-
 fulfillment flow, not a full storefront/checkout (see [What's stubbed](#whats-real-vs-stubbed)
@@ -19,21 +20,25 @@ below).
    one side while every option lives in a panel on the other, updating the design live as you
    change anything. No steps, no "generate" button, no loading spinner, it's a pure client-side
    SVG render.
-   - **Garment + blank**: tee (Gildan Heavy Cotton or Comfort Colors, different price) or cap.
-   - **Sponsors** (`src/lib/brands.ts`): up to 5, each one a real RC brand picked from a
+   - **Garment**: tee (Comfort Colors 1717, the only blank this store sells) or cap, in your
+     pick of 5 shirt colors (`src/components/GarmentMockup.tsx`'s `SHIRT_COLORS`).
+   - **Sponsors** (`src/lib/brands.ts`): up to 10, each one a real RC brand picked from a
      dropdown or a logo image uploaded from your device (PNG/JPG/WEBP, 1.5MB max). Uploaded
      logos get a colored frame that picks up the chosen palette. One sponsor renders as a big
-     wordmark; 2-5 render as a stacked sponsor-panel board, alternating colors per line, the
+     wordmark; 2+ render as a stacked sponsor-panel board, alternating colors per line, the
      same way a real RC pit-lane livery looks.
-   - **Colors, style, font**: two colors, a background style (flame, neon, carbon, checkered,
-     retro), and one of 20 display fonts (`src/lib/fonts.ts`).
+   - **Colors, graphic, font**: three colors, one of 5 graphic templates (grid, star, shield,
+     bolt, spear, `GRAPHIC_OPTIONS` in `src/lib/livery.ts`), and one of 20 display fonts
+     (`src/lib/fonts.ts`) with a live preview shown next to the picker.
    - **Name tag**: optional driver name and car number, in one of three layouts (bar, outline,
      badge).
+   - **Size guide**: an expandable Comfort Colors 1717 measurement chart next to the size
+     picker (approximate, see the code comment).
 3. **"Send to Printify"** rasterizes the live design to a PNG (so the exact fonts/colors you see
    are what gets uploaded) and calls `/api/printify/create-product` (`src/lib/printify.ts`),
    which creates a draft product in your Printify shop using the right blueprint/print-provider
-   for the garment+blank combo. Price is **recomputed server-side** from garment, blank, and
-   sponsor count, never trusted from the client.
+   for the garment. Price is **recomputed server-side** from garment and sponsor count, never
+   trusted from the client.
 
 ## Why it's not AI-generated
 
@@ -60,10 +65,10 @@ a small banner.
 You need, per garment you want to actually create:
 
 1. An API token and shop id from your Printify account (`PRINTIFY_API_KEY`, `PRINTIFY_SHOP_ID`).
-2. A blueprint and print provider pair for each of the three sellable garments, pick one in the
-   [Printify catalog](https://developers.printify.com/#catalog) (e.g. Gildan 5000 for the
-   Gildan tee option, Comfort Colors 1717 for the other tee option, a Yupoong 6089M for the
-   cap) and note both IDs into the matching vars in `.env.example`.
+2. A blueprint and print provider pair for each of the two sellable garments, pick one in the
+   [Printify catalog](https://developers.printify.com/#catalog) (Comfort Colors 1717 for the
+   tee, a Yupoong 6089M or similar for the cap, a provider that carries all 5 shirt colors)
+   and note both IDs into the matching vars in `.env.example`.
 
 Creating the product is **not** the same as being able to sell it. Printify still needs a
 connected sales channel (Shopify, Etsy, WooCommerce, or its own Pop-Up Store) before a customer
@@ -72,9 +77,9 @@ wire up a channel as a next step.
 
 ## What's real vs. stubbed
 
-- **Real**: the landing page, the live client-side design generator (sponsors, colors, style,
-  font, name tag), the client-side PNG rasterization before upload, the pricing math (base
-  price by blank plus $5 per extra sponsor, recomputed server-side), and the three-call
+- **Real**: the landing page, the live client-side design generator (sponsors, colors,
+  graphic, font, name tag), the client-side PNG rasterization before upload, the pricing math
+  (base price plus $5 per sponsor past the first 5, recomputed server-side), and the three-call
   Printify product-creation sequence (upload artwork, look up variant ids, create product).
 - **Stubbed / not attempted** (no accounts available to this build):
   - Actual Printify API key/shop setup, needs your account.

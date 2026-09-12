@@ -1,4 +1,4 @@
-import { basePriceCents, extraSponsorCount, EXTRA_SPONSOR_PRICE_CENTS, totalPriceCents, type TeeBlank } from "./pricing";
+import { basePriceCents, extraSponsorCount, EXTRA_SPONSOR_PRICE_CENTS, totalPriceCents } from "./pricing";
 import type { Garment, PrintifyCreateResult } from "./types";
 
 const API = "https://api.printify.com/v1";
@@ -9,10 +9,10 @@ interface GarmentConfig {
   label: string;
 }
 
-// Each sellable garment (tee x blank, or cap) is its own Printify
+// Each sellable garment (Comfort Colors tee, or cap) is its own Printify
 // blueprint/print-provider pair. See .env.example for where these IDs
 // come from.
-function garmentConfig(garment: Garment, blank: TeeBlank): GarmentConfig {
+function garmentConfig(garment: Garment): GarmentConfig {
   if (garment === "cap") {
     return {
       blueprintId: process.env.PRINTIFY_CAP_BLUEPRINT_ID,
@@ -20,17 +20,10 @@ function garmentConfig(garment: Garment, blank: TeeBlank): GarmentConfig {
       label: "Snapback Cap",
     };
   }
-  if (blank === "comfort") {
-    return {
-      blueprintId: process.env.PRINTIFY_TSHIRT_COMFORT_BLUEPRINT_ID,
-      printProviderId: process.env.PRINTIFY_TSHIRT_COMFORT_PRINT_PROVIDER_ID,
-      label: "Tee, Comfort Colors 1717",
-    };
-  }
   return {
-    blueprintId: process.env.PRINTIFY_TSHIRT_GILDAN_BLUEPRINT_ID,
-    printProviderId: process.env.PRINTIFY_TSHIRT_GILDAN_PRINT_PROVIDER_ID,
-    label: "Tee, Gildan Heavy Cotton (5000)",
+    blueprintId: process.env.PRINTIFY_TSHIRT_COMFORT_BLUEPRINT_ID,
+    printProviderId: process.env.PRINTIFY_TSHIRT_COMFORT_PRINT_PROVIDER_ID,
+    label: "Tee, Comfort Colors 1717",
   };
 }
 
@@ -57,9 +50,9 @@ async function printifyFetch(path: string, apiKey: string, init?: RequestInit) {
  * resolve to a stub describing exactly what *would* have been sent, so the
  * "Send to Printify" button in the UI always has something to show.
  *
- * Price is always recomputed here from garment, blank, and sponsor count,
- * never trusted from the client, so a tampered request can't undercut the
- * real price.
+ * Price is always recomputed here from garment and sponsor count, never
+ * trusted from the client, so a tampered request can't undercut the real
+ * price.
  *
  * Real-integration notes (printify.com/docs/api):
  *  - POST /v1/uploads/images.json            uploads artwork, returns an image id
@@ -71,23 +64,26 @@ async function printifyFetch(path: string, apiKey: string, init?: RequestInit) {
  */
 export async function createPrintifyProduct(input: {
   garment: Garment;
-  blank: TeeBlank;
   sponsorCount: number;
   sponsorLabels: string[];
+  shirtColor?: string;
+  size?: string;
   title: string;
   imageDataUrl: string;
 }): Promise<PrintifyCreateResult> {
   const apiKey = process.env.PRINTIFY_API_KEY;
   const shopId = process.env.PRINTIFY_SHOP_ID;
-  const cfg = garmentConfig(input.garment, input.blank);
+  const cfg = garmentConfig(input.garment);
 
-  const base = basePriceCents(input.garment, input.blank);
+  const base = basePriceCents(input.garment);
   const extras = extraSponsorCount(input.sponsorCount);
-  const price = totalPriceCents(input.garment, input.blank, input.sponsorCount);
+  const price = totalPriceCents(input.garment, input.sponsorCount);
 
   const wouldCreate = {
     title: input.title,
     garment: cfg.label,
+    color: input.shirtColor ?? "(any)",
+    size: input.size ?? "(any)",
     blueprint_id: cfg.blueprintId ?? "(not configured)",
     print_provider_id: cfg.printProviderId ?? "(not configured)",
     base_price_cents: base,
@@ -116,9 +112,16 @@ export async function createPrintifyProduct(input: {
     const variants = (await printifyFetch(
       `/catalog/blueprints/${cfg.blueprintId}/print_providers/${cfg.printProviderId}/variants.json`,
       apiKey
-    )) as { variants: Array<{ id: number }> };
+    )) as { variants: Array<{ id: number; title?: string }> };
 
-    const variantIds = variants.variants.map((v) => v.id);
+    // Best-effort: if a shirt color was picked, only include variants whose
+    // title mentions it (Printify variant titles are usually "Color / Size").
+    // Falls back to every variant if nothing matches, so this never zeroes
+    // out the product over a naming mismatch.
+    const colorFiltered = input.shirtColor
+      ? variants.variants.filter((v) => v.title?.toLowerCase().includes(input.shirtColor!.toLowerCase()))
+      : variants.variants;
+    const variantIds = (colorFiltered.length ? colorFiltered : variants.variants).map((v) => v.id);
     if (variantIds.length === 0) throw new Error("No variants returned for this blueprint/provider");
 
     const product = (await printifyFetch(`/shops/${shopId}/products.json`, apiKey, {

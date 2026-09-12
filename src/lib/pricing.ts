@@ -1,23 +1,17 @@
 import type { Garment } from "./types";
 
-// Tee blank options, two real print-on-demand blank brands, each with
-// their own Printify blueprint/print-provider (see .env.example) and a
-// different base price. Comfort Colors is a heavier, garment-dyed blank
-// and costs more than Gildan's Heavy Cotton line.
-export const TEE_BLANKS = {
-  gildan: { label: "Gildan Heavy Cotton (5000)", priceCents: 2800 },
-  comfort: { label: "Comfort Colors 1717", priceCents: 3600 },
-} as const;
-
-export type TeeBlank = keyof typeof TEE_BLANKS;
+// Comfort Colors 1717 is the only tee blank this store sells (no more
+// Gildan option, per direction) — a heavier, garment-dyed tee.
+export const TEE_PRICE_CENTS = 3600;
+export const TEE_BLANK_LABEL = "Comfort Colors 1717";
 
 export const CAP_PRICE_CENTS = 2800;
 export const EXTRA_SPONSOR_PRICE_CENTS = 500;
 export const INCLUDED_SPONSORS = 5;
 export const MAX_SPONSORS = 10;
 
-export function basePriceCents(garment: Garment, blank: TeeBlank): number {
-  return garment === "tee" ? TEE_BLANKS[blank].priceCents : CAP_PRICE_CENTS;
+export function basePriceCents(garment: Garment): number {
+  return garment === "tee" ? TEE_PRICE_CENTS : CAP_PRICE_CENTS;
 }
 
 // The first INCLUDED_SPONSORS are part of the base price; each one after
@@ -26,15 +20,8 @@ export function extraSponsorCount(sponsorCount: number): number {
   return Math.max(0, Math.min(sponsorCount, MAX_SPONSORS) - INCLUDED_SPONSORS);
 }
 
-export function totalPriceCents(
-  garment: Garment,
-  blank: TeeBlank,
-  sponsorCount: number
-): number {
-  return (
-    basePriceCents(garment, blank) +
-    extraSponsorCount(sponsorCount) * EXTRA_SPONSOR_PRICE_CENTS
-  );
+export function totalPriceCents(garment: Garment, sponsorCount: number): number {
+  return basePriceCents(garment) + extraSponsorCount(sponsorCount) * EXTRA_SPONSOR_PRICE_CENTS;
 }
 
 export function formatUsd(cents: number): string {

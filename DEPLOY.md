@@ -63,8 +63,6 @@ Printify" stub over to actually creating the product. Set each one you have as a
 ```bash
 npx wrangler pages secret put PRINTIFY_API_KEY --project-name=flameout-rc
 npx wrangler pages secret put PRINTIFY_SHOP_ID --project-name=flameout-rc
-npx wrangler pages secret put PRINTIFY_TSHIRT_GILDAN_BLUEPRINT_ID --project-name=flameout-rc
-npx wrangler pages secret put PRINTIFY_TSHIRT_GILDAN_PRINT_PROVIDER_ID --project-name=flameout-rc
 npx wrangler pages secret put PRINTIFY_TSHIRT_COMFORT_BLUEPRINT_ID --project-name=flameout-rc
 npx wrangler pages secret put PRINTIFY_TSHIRT_COMFORT_PRINT_PROVIDER_ID --project-name=flameout-rc
 npx wrangler pages secret put PRINTIFY_CAP_BLUEPRINT_ID --project-name=flameout-rc

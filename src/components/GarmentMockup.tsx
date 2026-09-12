@@ -2,11 +2,18 @@ import type { ReactNode } from "react";
 
 type Garment = "tee" | "cap";
 
-const GARMENT_FILL: Record<string, string> = {
-  black: "#15171b",
-  charcoal: "#2b2e34",
-  white: "#eceeef",
-};
+// Approximate swatch colors for 5 real Comfort Colors 1717 colorways
+// (garment-dyed, so these read a little muted/heathered rather than pure
+// hues — that's intentional, it's how the actual blank looks).
+export const SHIRT_COLORS = {
+  black: { label: "Black", hex: "#1b1b1b" },
+  white: { label: "White", hex: "#f0ede1" },
+  navy: { label: "True Navy", hex: "#232f3d" },
+  red: { label: "Crimson", hex: "#a2383e" },
+  grey: { label: "Granite", hex: "#8a8983" },
+} as const;
+
+export type ShirtColorId = keyof typeof SHIRT_COLORS;
 
 export function GarmentMockup({
   garment,
@@ -15,11 +22,11 @@ export function GarmentMockup({
   label,
 }: {
   garment: Garment;
-  garmentColor?: keyof typeof GARMENT_FILL;
+  garmentColor?: ShirtColorId;
   children?: ReactNode;
   label?: string;
 }) {
-  const fill = GARMENT_FILL[garmentColor] ?? GARMENT_FILL.black;
+  const fill = SHIRT_COLORS[garmentColor]?.hex ?? SHIRT_COLORS.black.hex;
 
   if (garment === "cap") {
     return (
@@ -44,10 +51,10 @@ export function GarmentMockup({
         <div
           className="absolute overflow-hidden rounded-[6px]"
           style={{
-            left: "35%",
-            top: "36%",
-            width: "30%",
-            height: "32%",
+            left: "20%",
+            top: "20%",
+            width: "60%",
+            height: "64%",
             transform: "rotate(-1deg)",
           }}
         >
@@ -81,10 +88,10 @@ export function GarmentMockup({
       <div
         className="absolute overflow-hidden rounded-[4px]"
         style={{
-          left: "30%",
-          top: "30%",
-          width: "40%",
-          height: "34%",
+          left: "10%",
+          top: "13%",
+          width: "80%",
+          height: "68%",
           transform: "rotate(-0.5deg)",
         }}
       >

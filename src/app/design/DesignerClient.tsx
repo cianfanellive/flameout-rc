@@ -1,33 +1,44 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { GarmentMockup } from "@/components/GarmentMockup";
+import { GarmentMockup, SHIRT_COLORS, type ShirtColorId } from "@/components/GarmentMockup";
 import { CheckeredFlagIcon } from "@/components/icons";
 import { RC_BRANDS } from "@/lib/brands";
 import { DEFAULT_FONT_ID, FONT_OPTIONS } from "@/lib/fonts";
-import { buildLiverySVG, type NameTagStyle, type SponsorItem } from "@/lib/livery";
+import { GRAPHIC_OPTIONS, buildLiverySVG, type GraphicId, type NameTagStyle, type SponsorItem } from "@/lib/livery";
 import {
   CAP_PRICE_CENTS,
   EXTRA_SPONSOR_PRICE_CENTS,
   INCLUDED_SPONSORS,
   MAX_SPONSORS,
-  TEE_BLANKS,
+  TEE_BLANK_LABEL,
+  TEE_PRICE_CENTS,
   extraSponsorCount,
   formatUsd,
   totalPriceCents,
-  type TeeBlank,
 } from "@/lib/pricing";
-import { STYLE_LABEL, type DesignStyle, type Garment } from "@/lib/types";
+import type { Garment } from "@/lib/types";
 
-const STYLES = Object.keys(STYLE_LABEL) as DesignStyle[];
-const TEE_SIZES = ["S", "M", "L", "XL", "XXL"];
+const TEE_SIZES = ["S", "M", "L", "XL", "XXL"] as const;
 const NAME_TAG_STYLES: { id: NameTagStyle; label: string }[] = [
   { id: "bar", label: "Bar" },
   { id: "outline", label: "Outline" },
   { id: "badge", label: "Badge" },
 ];
+const SHIRT_COLOR_IDS = Object.keys(SHIRT_COLORS) as ShirtColorId[];
 const MAX_LOGO_BYTES = 1.5 * 1024 * 1024;
 const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+// Comfort Colors 1717 measurements, body width flat / length. Approximate
+// from the standard published spec sheet, confirm against the current
+// official chart before relying on this for real production.
+const SIZE_GUIDE: Record<(typeof TEE_SIZES)[number], { width: string; length: string }> = {
+  S: { width: '18"', length: '28"' },
+  M: { width: '20"', length: '29"' },
+  L: { width: '22"', length: '30"' },
+  XL: { width: '24"', length: '31"' },
+  XXL: { width: '26"', length: '32"' },
+};
 
 interface PrintifyResult {
   stubbed: boolean;
@@ -41,13 +52,15 @@ function sponsorLabel(s: SponsorItem, i: number): string {
 
 export function DesignerClient() {
   const [garment, setGarment] = useState<Garment>("tee");
-  const [blank, setBlank] = useState<TeeBlank>("gildan");
-  const [style, setStyle] = useState<DesignStyle>("flame");
+  const [shirtColor, setShirtColor] = useState<ShirtColorId>("black");
+  const [graphic, setGraphic] = useState<GraphicId>("grid");
   const [fontId, setFontId] = useState(DEFAULT_FONT_ID);
   const [sponsors, setSponsors] = useState<SponsorItem[]>([]);
   const [primary, setPrimary] = useState("#ff5a1f");
   const [secondary, setSecondary] = useState("#ffc400");
-  const [size, setSize] = useState("M");
+  const [tertiary, setTertiary] = useState("#0a0c0f");
+  const [size, setSize] = useState<(typeof TEE_SIZES)[number]>("M");
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [driverName, setDriverName] = useState("");
   const [carNumber, setCarNumber] = useState("");
   const [nameTagStyle, setNameTagStyle] = useState<NameTagStyle>("bar");
@@ -62,22 +75,23 @@ export function DesignerClient() {
   );
   const atMax = sponsors.length >= MAX_SPONSORS;
   const extras = extraSponsorCount(sponsors.length);
-  const base = garment === "tee" ? TEE_BLANKS[blank].priceCents : CAP_PRICE_CENTS;
-  const total = totalPriceCents(garment, blank, sponsors.length);
+  const base = garment === "tee" ? TEE_PRICE_CENTS : CAP_PRICE_CENTS;
+  const total = totalPriceCents(garment, sponsors.length);
 
   const svg = useMemo(
     () =>
       buildLiverySVG({
         primary,
         secondary,
+        tertiary,
         sponsors,
         fontId,
         driverName,
         carNumber,
         nameTagStyle,
-        style,
+        graphic,
       }),
-    [primary, secondary, sponsors, fontId, driverName, carNumber, nameTagStyle, style]
+    [primary, secondary, tertiary, sponsors, fontId, driverName, carNumber, nameTagStyle, graphic]
   );
 
   function addBrand(name: string) {
@@ -132,7 +146,8 @@ export function DesignerClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           garment,
-          blank,
+          shirtColor: SHIRT_COLORS[shirtColor].label,
+          size: garment === "tee" ? size : undefined,
           sponsorCount: sponsors.length,
           sponsorLabels,
           title: `${sponsorLabels.join(" x ")} livery`,
@@ -155,7 +170,7 @@ export function DesignerClient() {
       <div className="lg:sticky lg:top-24 lg:self-start">
         <div className="rounded-md border border-white/10 bg-asphalt-800 p-6 shadow-panel">
           <div className="mx-auto max-w-sm">
-            <GarmentMockup garment={garment} garmentColor="black" label={sponsors.map((s, i) => sponsorLabel(s, i)).join(" x ")}>
+            <GarmentMockup garment={garment} garmentColor={shirtColor} label={sponsors.map((s, i) => sponsorLabel(s, i)).join(" x ")}>
               <div className="h-full w-full" dangerouslySetInnerHTML={{ __html: svg }} />
             </GarmentMockup>
           </div>
@@ -223,24 +238,33 @@ export function DesignerClient() {
                 onClick={() => setGarment(g)}
                 className={segmentClass(garment === g)}
               >
-                {g === "tee" ? "TEE" : "SNAPBACK CAP"}
+                {g === "tee" ? `TEE (${TEE_BLANK_LABEL.toUpperCase()})` : "SNAPBACK CAP"}
               </button>
             ))}
           </div>
         </div>
 
-        {garment === "tee" ? (
-          <div>
-            <Label htmlFor="blank">BLANK</Label>
-            <select id="blank" value={blank} onChange={(e) => setBlank(e.target.value as TeeBlank)} className={selectClass}>
-              {(Object.keys(TEE_BLANKS) as TeeBlank[]).map((b) => (
-                <option key={b} value={b}>
-                  {TEE_BLANKS[b].label} ({formatUsd(TEE_BLANKS[b].priceCents)})
-                </option>
-              ))}
-            </select>
+        <div>
+          <Label>SHIRT COLOR</Label>
+          <div className="mt-2 flex flex-wrap gap-3">
+            {SHIRT_COLOR_IDS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setShirtColor(id)}
+                aria-label={SHIRT_COLORS[id].label}
+                title={SHIRT_COLORS[id].label}
+                className={`h-9 w-9 rounded-full border-2 transition ${
+                  shirtColor === id ? "border-flame-500 shadow-glow" : "border-white/20 hover:border-white/40"
+                }`}
+                style={{ backgroundColor: SHIRT_COLORS[id].hex }}
+              />
+            ))}
+            <span className="self-center text-xs uppercase tracking-wide text-chrome-400">
+              {SHIRT_COLORS[shirtColor].label}
+            </span>
           </div>
-        ) : null}
+        </div>
 
         <div>
           <div className="flex items-baseline justify-between">
@@ -317,31 +341,59 @@ export function DesignerClient() {
           ) : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <ColorField label="PRIMARY COLOR" value={primary} onChange={setPrimary} />
-          <ColorField label="SECONDARY COLOR" value={secondary} onChange={setSecondary} />
+        <div>
+          <div className="flex items-baseline justify-between">
+            <Label>COLORS</Label>
+            <a
+              href="https://htmlcolorcodes.com/color-picker/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] normal-case text-flame-400 underline decoration-flame-500/40 underline-offset-2 hover:text-flame-300"
+            >
+              FIND A HEX / RGB CODE ↗
+            </a>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-3">
+            <ColorField label="PRIMARY" value={primary} onChange={setPrimary} />
+            <ColorField label="SECONDARY" value={secondary} onChange={setSecondary} />
+            <ColorField label="TERTIARY" value={tertiary} onChange={setTertiary} />
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="style">DESIGN STYLE</Label>
-            <select id="style" value={style} onChange={(e) => setStyle(e.target.value as DesignStyle)} className={selectClass}>
-              {STYLES.map((s) => (
-                <option key={s} value={s}>
-                  {STYLE_LABEL[s]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label htmlFor="font">FONT</Label>
-            <select id="font" value={fontId} onChange={(e) => setFontId(e.target.value)} className={selectClass}>
-              {FONT_OPTIONS.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
+        <div>
+          <Label htmlFor="font">FONT</Label>
+          <select id="font" value={fontId} onChange={(e) => setFontId(e.target.value)} className={selectClass}>
+            {FONT_OPTIONS.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+          <p
+            className="mt-2 truncate rounded-sm border border-white/10 bg-asphalt-900 px-3 py-2 text-lg text-chrome-300"
+            style={{ fontFamily: `'${FONT_OPTIONS.find((f) => f.id === fontId)?.family}', sans-serif` }}
+          >
+            FLAMEOUT RC 2026
+          </p>
+        </div>
+
+        <div>
+          <Label>GRAPHIC</Label>
+          <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {GRAPHIC_OPTIONS.map((g) => (
+              <GraphicThumb
+                key={g.id}
+                id={g.id}
+                label={g.label}
+                active={graphic === g.id}
+                onClick={() => setGraphic(g.id)}
+                primary={primary}
+                secondary={secondary}
+                tertiary={tertiary}
+                fontId={fontId}
+                sponsors={sponsors}
+              />
+            ))}
           </div>
         </div>
 
@@ -378,19 +430,103 @@ export function DesignerClient() {
         </div>
 
         {garment === "tee" ? (
-          <div>
-            <Label htmlFor="size">SIZE</Label>
-            <select id="size" value={size} onChange={(e) => setSize(e.target.value)} className={selectClass}>
+          <div className="border-t border-white/10 pt-5">
+            <div className="flex items-baseline justify-between">
+              <Label htmlFor="size">SIZE</Label>
+              <button
+                type="button"
+                onClick={() => setShowSizeGuide((v) => !v)}
+                className="text-[11px] normal-case text-flame-400 underline decoration-flame-500/40 underline-offset-2 hover:text-flame-300"
+              >
+                {showSizeGuide ? "HIDE SIZE GUIDE" : "SIZE GUIDE"}
+              </button>
+            </div>
+            <select id="size" value={size} onChange={(e) => setSize(e.target.value as typeof size)} className={selectClass}>
               {TEE_SIZES.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
               ))}
             </select>
+
+            {showSizeGuide ? (
+              <div className="mt-3 overflow-x-auto rounded-sm border border-white/10">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-asphalt-900 text-chrome-400">
+                      <th className="px-3 py-2 font-display uppercase tracking-wide">Size</th>
+                      <th className="px-3 py-2 font-display uppercase tracking-wide">Chest Width</th>
+                      <th className="px-3 py-2 font-display uppercase tracking-wide">Body Length</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {TEE_SIZES.map((s) => (
+                      <tr key={s} className="border-t border-white/10 text-chrome-300">
+                        <td className="px-3 py-2 font-display">{s}</td>
+                        <td className="px-3 py-2">{SIZE_GUIDE[s].width}</td>
+                        <td className="px-3 py-2">{SIZE_GUIDE[s].length}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="border-t border-white/10 px-3 py-2 text-[11px] text-chrome-400/70">
+                  {TEE_BLANK_LABEL} measurements, laid flat. Approximate, confirm against the
+                  official spec sheet before a real launch.
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
     </div>
+  );
+}
+
+function GraphicThumb({
+  id,
+  label,
+  active,
+  onClick,
+  primary,
+  secondary,
+  tertiary,
+  fontId,
+  sponsors,
+}: {
+  id: GraphicId;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  primary: string;
+  secondary: string;
+  tertiary: string;
+  fontId: string;
+  sponsors: SponsorItem[];
+}) {
+  const thumbSvg = useMemo(
+    () =>
+      buildLiverySVG({
+        primary,
+        secondary,
+        tertiary,
+        sponsors: sponsors.length ? sponsors : [{ kind: "text", label: "YOUR-LOGO" }],
+        fontId,
+        graphic: id,
+      }),
+    [primary, secondary, tertiary, sponsors, fontId, id]
+  );
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1 rounded-sm border p-1.5 transition ${
+        active ? "border-flame-500 shadow-glow" : "border-white/15 hover:border-white/35"
+      }`}
+    >
+      <div className="aspect-square w-full overflow-hidden rounded-sm bg-asphalt-900" dangerouslySetInnerHTML={{ __html: thumbSvg }} />
+      <span className="text-[10px] uppercase tracking-wide text-chrome-400">{label.split(": ")[1] ?? label}</span>
+    </button>
   );
 }
 
@@ -460,20 +596,20 @@ function ColorField({
 }) {
   return (
     <div>
-      <Label>{label}</Label>
-      <div className="mt-2 flex items-center gap-2 rounded-sm border border-white/15 bg-asphalt-900 px-2 py-1.5">
+      <label className="text-[10px] uppercase tracking-widest text-chrome-400">{label}</label>
+      <div className="mt-1.5 flex items-center gap-1.5 rounded-sm border border-white/15 bg-asphalt-900 px-2 py-1.5">
         <input
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-9 cursor-pointer rounded-sm border border-white/10 bg-transparent"
+          className="h-6 w-7 flex-shrink-0 cursor-pointer rounded-sm border border-white/10 bg-transparent"
           aria-label={label}
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent text-sm text-chrome-300 focus:outline-none"
+          className="w-full min-w-0 bg-transparent text-xs text-chrome-300 focus:outline-none"
         />
       </div>
     </div>
