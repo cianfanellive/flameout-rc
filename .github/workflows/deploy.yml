@@ -33,6 +33,14 @@ jobs:
       - name: Build for Cloudflare Pages
         run: npx @cloudflare/next-on-pages
 
+      - name: Ensure Cloudflare Pages project exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # Idempotent: errors (already exists) are swallowed so this never
+        # blocks a normal deploy — it only matters the very first run.
+        run: npx wrangler pages project create flameout-rc --production-branch=main || true
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:

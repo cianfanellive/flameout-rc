@@ -12,14 +12,17 @@ npx wrangler login
 
 Opens a browser tab to authorize the Wrangler CLI against your Cloudflare account.
 
-## 1. Create the Pages project once
+## 1. The Pages project
+
+`.github/workflows/deploy.yml` creates the `flameout-rc` Pages project automatically on its
+first run if it doesn't exist yet — nothing to do here unless you want a different project
+name. If you do, create it yourself first:
 
 ```bash
-npx wrangler pages project create flameout-rc --production-branch=main
+npx wrangler pages project create <your-name> --production-branch=main
 ```
 
-If `flameout-rc` is already taken on your account, Wrangler will tell you — pick the
-alternative it suggests, then also update `name` in `wrangler.toml`, `projectName:` in
+Then update `name` in `wrangler.toml`, the `create`/`projectName:` lines in
 `.github/workflows/deploy.yml`, and `--project-name` in `package.json`'s
 `cf:deploy`/`cf:preview` scripts to match.
 
