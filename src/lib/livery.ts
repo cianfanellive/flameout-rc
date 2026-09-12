@@ -12,6 +12,7 @@
 // options) and on the server, pure functions, no Node-only APIs.
 
 import { fontStack } from "./fonts";
+import { MAX_SPONSORS } from "./pricing";
 
 export type LiveryStyle = "flame" | "neon" | "carbon" | "checkered" | "retro";
 export type NameTagStyle = "bar" | "outline" | "badge";
@@ -94,7 +95,9 @@ function renderSponsorBlock(
   textStroke: string,
   fontFamily: string
 ): string {
-  const items = sponsors.length ? sponsors.slice(0, 5) : [{ kind: "text", label: "YOUR SPONSOR" } as const];
+  const items = sponsors.length
+    ? sponsors.slice(0, MAX_SPONSORS)
+    : [{ kind: "text", label: "YOUR SPONSOR" } as const];
 
   if (items.length === 1) {
     const item = items[0];
@@ -108,10 +111,15 @@ function renderSponsorBlock(
     )}" letter-spacing="2" fill="${textFill}" stroke="${textStroke}" stroke-width="2" paint-order="stroke">${safe}</text>`;
   }
 
-  const fontSize = items.length <= 3 ? 54 : items.length === 4 ? 46 : 40;
-  const rowHeight = fontSize * 1.45;
+  // Scale continuously with the sponsor count (2-MAX_SPONSORS) instead of a
+  // few fixed tiers, so the board always fills the same vertical band
+  // (roughly y=380 to y=680, clear of the name tag below it) whether
+  // there are 2 sponsors or the full 10.
+  const BAND_HEIGHT = 300;
+  const rowHeight = Math.min(80, BAND_HEIGHT / (items.length - 1));
+  const fontSize = Math.max(22, Math.min(54, rowHeight * 0.72));
   const totalHeight = rowHeight * (items.length - 1);
-  const startY = 560 - totalHeight / 2;
+  const startY = 530 - totalHeight / 2;
 
   return items
     .map((item, i) => {
@@ -125,7 +133,7 @@ function renderSponsorBlock(
       const fill = i % 2 === 0 ? textFill : secondary;
       const markerFill = i % 2 === 0 ? secondary : primary;
       return `
-        <rect x="228" y="${y - fontSize * 0.72}" width="10" height="10" fill="${markerFill}" transform="rotate(45 233 ${
+        <rect x="${228 - Math.max(0, 54 - fontSize) * 0.3}" y="${y - fontSize * 0.72}" width="10" height="10" fill="${markerFill}" transform="rotate(45 233 ${
         y - fontSize * 0.67
       })" />
         <text x="400" y="${y}" text-anchor="middle" font-family="${fontFamily}" font-size="${fontSize}" letter-spacing="1.5" fill="${fill}" stroke="${textStroke}" stroke-width="1.4" paint-order="stroke">${safe}</text>`;

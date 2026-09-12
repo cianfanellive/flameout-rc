@@ -3,7 +3,7 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { GarmentMockup } from "@/components/GarmentMockup";
 import { buildLiverySVG, type LiveryStyle, type SponsorItem } from "@/lib/livery";
-import { EXTRA_SPONSOR_PRICE_CENTS, formatUsd, MAX_SPONSORS } from "@/lib/pricing";
+import { EXTRA_SPONSOR_PRICE_CENTS, formatUsd, INCLUDED_SPONSORS, MAX_SPONSORS } from "@/lib/pricing";
 import {
   BoltIcon,
   CheckeredFlagIcon,
@@ -17,7 +17,9 @@ const STEPS = [
   {
     icon: GaugeIcon,
     title: "PICK YOUR SPONSORS",
-    body: "Choose real RC brands from the dropdown or upload your own logo. Add up to 5, each one past the first is +$5.",
+    body: `Choose real RC brands from the dropdown or upload your own logo. First ${INCLUDED_SPONSORS} are included, +${formatUsd(
+      EXTRA_SPONSOR_PRICE_CENTS
+    )} each after that, up to ${MAX_SPONSORS} total.`,
   },
   {
     icon: BoltIcon,
@@ -81,6 +83,13 @@ export default function HomePage() {
       <section className="relative overflow-hidden border-b border-white/10 bg-asphalt-900">
         <div className="stripes absolute inset-0" />
         <div className="asphalt-texture absolute inset-0" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/kyosho-buggy.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 top-1/2 hidden w-[52%] max-w-2xl -translate-y-1/2 rotate-[-4deg] opacity-[0.14] mix-blend-luminosity lg:block"
+        />
         <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-flame-500 to-transparent" />
 
         <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[1.1fr_0.9fr] md:py-24">
@@ -245,11 +254,11 @@ export default function HomePage() {
               ],
               [
                 "CAN I UPLOAD MY OWN SPONSOR LOGO?",
-                "Yes. The sponsor picker lets you add real RC brands from the dropdown, upload your own logo image, or mix both, up to 5 total. Uploaded logos get a colored frame that picks up your chosen palette.",
+                `Yes. The sponsor picker lets you add real RC brands from the dropdown, upload your own logo image, or mix both, up to ${MAX_SPONSORS} total. Uploaded logos get a colored frame that picks up your chosen palette.`,
               ],
               [
-                "WHY DOES ADDING MORE SPONSORS COST EXTRA?",
-                `The first sponsor is included in the base price. Each additional one, up to ${MAX_SPONSORS} total, is +${formatUsd(
+                "WHY DOES ADDING MORE THAN 5 SPONSORS COST EXTRA?",
+                `The first ${INCLUDED_SPONSORS} sponsors are included in the base price. Each one after that, up to ${MAX_SPONSORS} total, is +${formatUsd(
                   EXTRA_SPONSOR_PRICE_CENTS
                 )}. More names means a busier layout and more setup on our end.`,
               ],

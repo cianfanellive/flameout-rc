@@ -13,16 +13,17 @@ export type TeeBlank = keyof typeof TEE_BLANKS;
 
 export const CAP_PRICE_CENTS = 2800;
 export const EXTRA_SPONSOR_PRICE_CENTS = 500;
-export const MAX_SPONSORS = 5;
+export const INCLUDED_SPONSORS = 5;
+export const MAX_SPONSORS = 10;
 
 export function basePriceCents(garment: Garment, blank: TeeBlank): number {
   return garment === "tee" ? TEE_BLANKS[blank].priceCents : CAP_PRICE_CENTS;
 }
 
-// The first sponsor (brand pick or uploaded logo) is included; each one
-// after it, up to MAX_SPONSORS, is $5.
+// The first INCLUDED_SPONSORS are part of the base price; each one after
+// that, up to MAX_SPONSORS, is $5.
 export function extraSponsorCount(sponsorCount: number): number {
-  return Math.max(0, Math.min(sponsorCount, MAX_SPONSORS) - 1);
+  return Math.max(0, Math.min(sponsorCount, MAX_SPONSORS) - INCLUDED_SPONSORS);
 }
 
 export function totalPriceCents(

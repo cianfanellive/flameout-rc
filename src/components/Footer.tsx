@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { FlameMark } from "./icons";
 
 export function Footer() {
   return (
@@ -7,12 +6,8 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-5 py-12">
         <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr]">
           <div>
-            <div className="flex items-center gap-2">
-              <FlameMark className="h-5 w-5 text-flame-500" />
-              <span className="font-display text-lg uppercase tracking-wide text-chrome-300">
-                Flameout<span className="text-flame-500">RC</span>
-              </span>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-wordmark.png" alt="FlameoutRC" className="h-8 w-auto" />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-chrome-400">
               Custom apparel for the RC-obsessed. Every design is generated for
               your rig, your colors, your run, printed one at a time, never

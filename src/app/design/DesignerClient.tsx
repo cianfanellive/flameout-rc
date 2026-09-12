@@ -9,6 +9,7 @@ import { buildLiverySVG, type NameTagStyle, type SponsorItem } from "@/lib/liver
 import {
   CAP_PRICE_CENTS,
   EXTRA_SPONSOR_PRICE_CENTS,
+  INCLUDED_SPONSORS,
   MAX_SPONSORS,
   TEE_BLANKS,
   extraSponsorCount,
@@ -245,7 +246,7 @@ export function DesignerClient() {
           <div className="flex items-baseline justify-between">
             <Label htmlFor="brand-picker">SPONSORS (UP TO {MAX_SPONSORS})</Label>
             <span className="text-[11px] normal-case text-chrome-400/70">
-              1st included, each extra +{formatUsd(EXTRA_SPONSOR_PRICE_CENTS)}
+              first {INCLUDED_SPONSORS} included, +{formatUsd(EXTRA_SPONSOR_PRICE_CENTS)} each after
             </span>
           </div>
 
@@ -299,7 +300,9 @@ export function DesignerClient() {
                     />
                   ) : null}
                   <span className="pl-0.5">{sponsorLabel(s, i)}</span>
-                  <span className="text-chrome-400/70">{i > 0 ? `+${formatUsd(EXTRA_SPONSOR_PRICE_CENTS)}` : "included"}</span>
+                  <span className="text-chrome-400/70">
+                    {i < INCLUDED_SPONSORS ? "included" : `+${formatUsd(EXTRA_SPONSOR_PRICE_CENTS)}`}
+                  </span>
                   <button
                     type="button"
                     onClick={() => removeSponsor(i)}

@@ -1,15 +1,12 @@
 import Link from "next/link";
-import { FlameMark } from "./icons";
 
 export function Nav() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-asphalt-950/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
-        <Link href="/" className="flex items-center gap-2 group">
-          <FlameMark className="h-6 w-6 text-flame-500 transition group-hover:scale-110" />
-          <span className="font-display text-xl uppercase tracking-wide text-chrome-300">
-            Flameout<span className="text-flame-500">RC</span>
-          </span>
+        <Link href="/" className="flex items-center transition hover:opacity-90">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-wordmark.png" alt="FlameoutRC" className="h-9 w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-7 font-display text-sm font-medium uppercase tracking-wider text-chrome-400 md:flex">
