@@ -42,10 +42,8 @@ jobs:
         run: npx wrangler pages project create flameout-rc --production-branch=main || true
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: flameout-rc
-          directory: .vercel/output/static
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy .vercel/output/static --project-name=flameout-rc
