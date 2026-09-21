@@ -12,6 +12,22 @@ export function FlameMark({ className = "h-6 w-6" }: { className?: string }) {
   );
 }
 
+export function CartIcon({ className = "h-6 w-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+      <path
+        d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L21 8H6"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="21" r="1.4" fill="currentColor" />
+      <circle cx="17" cy="21" r="1.4" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function CheckeredFlagIcon({ className = "h-6 w-6" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">

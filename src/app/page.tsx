@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { GarmentMockup, type ShirtColorId } from "@/components/GarmentMockup";
-import { buildLiverySVG, type GraphicId, type SponsorItem } from "@/lib/livery";
+import { buildFrontSVG, type SponsorItem } from "@/lib/livery";
 import { EXTRA_SPONSOR_PRICE_CENTS, formatUsd, INCLUDED_SPONSORS, MAX_SPONSORS, TEE_BLANK_LABEL } from "@/lib/pricing";
 import {
   BoltIcon,
@@ -24,16 +24,16 @@ const STEPS = [
   {
     icon: BoltIcon,
     title: "DIAL IN THE LOOK",
-    body: "Three colors, a font, and one of 5 graphic templates. The design updates live as you go, no waiting, no generating.",
+    body: "Three colors and a font. The design updates live as you go, no waiting, no generating.",
   },
   {
     icon: ShirtIcon,
-    title: "SEE IT ON THE SHIRT",
-    body: "The full tee or cap mockup updates instantly, in your shirt color, with the exact price shown before you commit.",
+    title: "FRONT AND BACK",
+    body: "See sponsors on the front and your driver name and car number on the back, in your shirt color, before you commit.",
   },
   {
     icon: TruckIcon,
-    title: "WE PRINT AND SHIP",
+    title: "ADD TO CART",
     body: "Printify handles production and shipping on demand. No warehouse, no minimums, no waiting on a batch run.",
   },
 ];
@@ -41,11 +41,11 @@ const STEPS = [
 const FEATURES = [
   {
     title: "YOUR LOGO OR OURS",
-    body: "Pick a brand from the list or upload your own sponsor logo. Mix both in the same sponsor board.",
+    body: "Pick a brand from the list or upload your own sponsor logo. Mix both in the same design.",
   },
   {
-    title: "20 FONTS, 3 NAME TAG STYLES",
-    body: "Bar, outline, or badge for your driver name and car number, set in a real font, not a generic default.",
+    title: "20 FONTS, FRONT AND BACK",
+    body: "Sponsors on the front, your driver name and car number on the back, set in a real font, not a generic default.",
   },
   {
     title: "COMFORT COLORS, 5 COLORWAYS",
@@ -64,15 +64,14 @@ const SHOWCASE: Array<{
   primary: string;
   secondary: string;
   tertiary: string;
-  graphic: GraphicId;
   garmentColor: ShirtColorId;
 }> = [
-  { garment: "tee", label: "TRAXXAS", sponsors: [{ kind: "text", label: "Traxxas" }], primary: "#ff5a1f", secondary: "#ffc400", tertiary: "#0a0c0f", graphic: "star", garmentColor: "black" },
-  { garment: "cap", label: "TEAM ASSOCIATED x LOSI", sponsors: [{ kind: "text", label: "Team Associated" }, { kind: "text", label: "Losi" }], primary: "#ff2d2d", secondary: "#0a0c0f", tertiary: "#f4f5f6", graphic: "grid", garmentColor: "black" },
-  { garment: "tee", label: "ARRMA", sponsors: [{ kind: "text", label: "ARRMA" }], primary: "#7dd3fc", secondary: "#ff2d2d", tertiary: "#0a0c0f", graphic: "bolt", garmentColor: "navy" },
-  { garment: "cap", label: "AXIAL", sponsors: [{ kind: "text", label: "Axial" }], primary: "#c9ccd1", secondary: "#5b6470", tertiary: "#0a0c0f", graphic: "shield", garmentColor: "grey" },
-  { garment: "tee", label: "REDCAT x PRO-LINE x JCONCEPTS", sponsors: [{ kind: "text", label: "Redcat Racing" }, { kind: "text", label: "Pro-Line" }, { kind: "text", label: "JConcepts" }], primary: "#ffd23f", secondary: "#ff5a1f", tertiary: "#0a0c0f", graphic: "spear", garmentColor: "red" },
-  { garment: "cap", label: "KYOSHO", sponsors: [{ kind: "text", label: "Kyosho" }], primary: "#ff8a3d", secondary: "#ffc400", tertiary: "#0a0c0f", graphic: "star", garmentColor: "white" },
+  { garment: "tee", label: "TRAXXAS", sponsors: [{ kind: "text", label: "Traxxas" }], primary: "#ff5a1f", secondary: "#ffc400", tertiary: "#0a0c0f", garmentColor: "black" },
+  { garment: "cap", label: "TEAM ASSOCIATED x LOSI", sponsors: [{ kind: "text", label: "Team Associated" }, { kind: "text", label: "Losi" }], primary: "#ff2d2d", secondary: "#0a0c0f", tertiary: "#f4f5f6", garmentColor: "black" },
+  { garment: "tee", label: "ARRMA", sponsors: [{ kind: "text", label: "ARRMA" }], primary: "#7dd3fc", secondary: "#ff2d2d", tertiary: "#0a0c0f", garmentColor: "navy" },
+  { garment: "cap", label: "AXIAL", sponsors: [{ kind: "text", label: "Axial" }], primary: "#c9ccd1", secondary: "#5b6470", tertiary: "#0a0c0f", garmentColor: "grey" },
+  { garment: "tee", label: "REDCAT x PRO-LINE x JCONCEPTS", sponsors: [{ kind: "text", label: "Redcat Racing" }, { kind: "text", label: "Pro-Line" }, { kind: "text", label: "JConcepts" }], primary: "#ffd23f", secondary: "#ff5a1f", tertiary: "#0a0c0f", garmentColor: "red" },
+  { garment: "cap", label: "KYOSHO", sponsors: [{ kind: "text", label: "Kyosho" }], primary: "#ff8a3d", secondary: "#ffc400", tertiary: "#0a0c0f", garmentColor: "white" },
 ];
 
 export default function HomePage() {
@@ -107,9 +106,9 @@ export default function HomePage() {
               <span className="text-stroke">rig.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-chrome-400">
-              Pick up to {MAX_SPONSORS} RC brands or upload your own logos, three colors, a
-              font, and a graphic template. See it update live, then see it on the shirt,
-              printed one-off on a tee or snapback. No minimums.
+              Pick up to {MAX_SPONSORS} RC brands or upload your own logos, three colors, and a
+              font. See it live on the front and back, then add it to your cart, printed
+              one-off on a tee or snapback. No minimums.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
@@ -149,7 +148,6 @@ export default function HomePage() {
                   secondary="#ffc400"
                   tertiary="#0a0c0f"
                   sponsors={[{ kind: "text", label: "Traxxas" }]}
-                  graphic="star"
                 />
               </GarmentMockup>
             </div>
@@ -160,7 +158,6 @@ export default function HomePage() {
                   secondary="#0a0c0f"
                   tertiary="#f4f5f6"
                   sponsors={[{ kind: "text", label: "Team Associated" }, { kind: "text", label: "Losi" }]}
-                  graphic="grid"
                 />
               </GarmentMockup>
             </div>
@@ -211,7 +208,7 @@ export default function HomePage() {
       {/* ── SHOWCASE ─────────────────────────────────────────────────── */}
       <section id="showcase" className="border-b border-white/10 bg-asphalt-950 py-20">
         <div className="mx-auto max-w-6xl px-5">
-          <SectionHeading eyebrow="LIVERY GALLERY" title="EVERY SPONSOR COMBO. EVERY GRAPHIC." />
+          <SectionHeading eyebrow="LIVERY GALLERY" title="EVERY SPONSOR COMBO. EVERY COLOR." />
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {SHOWCASE.map((item) => (
               <div
@@ -224,7 +221,6 @@ export default function HomePage() {
                     secondary={item.secondary}
                     tertiary={item.tertiary}
                     sponsors={item.sponsors}
-                    graphic={item.graphic}
                   />
                 </GarmentMockup>
                 <div className="mt-4">
@@ -328,14 +324,12 @@ function LiverySvg({
   secondary,
   tertiary,
   sponsors,
-  graphic,
 }: {
   primary: string;
   secondary: string;
   tertiary: string;
   sponsors: SponsorItem[];
-  graphic: GraphicId;
 }) {
-  const svg = buildLiverySVG({ primary, secondary, tertiary, sponsors, graphic });
+  const svg = buildFrontSVG({ primary, secondary, tertiary, sponsors });
   return <div className="h-full w-full" dangerouslySetInnerHTML={{ __html: svg }} />;
 }

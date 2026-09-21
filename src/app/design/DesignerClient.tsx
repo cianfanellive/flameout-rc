@@ -1,17 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { GarmentMockup, SHIRT_COLORS, type ShirtColorId } from "@/components/GarmentMockup";
 import { CheckeredFlagIcon } from "@/components/icons";
+import { addToCart } from "@/lib/cart";
 import { RC_BRANDS } from "@/lib/brands";
 import { DEFAULT_FONT_ID, FONT_OPTIONS } from "@/lib/fonts";
-import { GRAPHIC_OPTIONS, buildLiverySVG, type GraphicId, type NameTagStyle, type SponsorItem } from "@/lib/livery";
+import { buildBackSVG, buildFrontSVG, type SponsorItem } from "@/lib/livery";
 import {
   CAP_PRICE_CENTS,
   EXTRA_SPONSOR_PRICE_CENTS,
   INCLUDED_SPONSORS,
   MAX_SPONSORS,
-  TEE_BLANK_LABEL,
   TEE_PRICE_CENTS,
   extraSponsorCount,
   formatUsd,
@@ -20,11 +21,6 @@ import {
 import type { Garment } from "@/lib/types";
 
 const TEE_SIZES = ["S", "M", "L", "XL", "XXL"] as const;
-const NAME_TAG_STYLES: { id: NameTagStyle; label: string }[] = [
-  { id: "bar", label: "Bar" },
-  { id: "outline", label: "Outline" },
-  { id: "badge", label: "Badge" },
-];
 const SHIRT_COLOR_IDS = Object.keys(SHIRT_COLORS) as ShirtColorId[];
 const MAX_LOGO_BYTES = 1.5 * 1024 * 1024;
 const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -40,20 +36,12 @@ const SIZE_GUIDE: Record<(typeof TEE_SIZES)[number], { width: string; length: st
   XXL: { width: '26"', length: '32"' },
 };
 
-interface PrintifyResult {
-  stubbed: boolean;
-  productId?: string;
-  note: string;
-}
-
 function sponsorLabel(s: SponsorItem, i: number): string {
   return s.kind === "text" ? s.label : `Logo ${i + 1}`;
 }
 
-export function DesignerClient() {
-  const [garment, setGarment] = useState<Garment>("tee");
+export function DesignerClient({ garment }: { garment: Garment }) {
   const [shirtColor, setShirtColor] = useState<ShirtColorId>("black");
-  const [graphic, setGraphic] = useState<GraphicId>("grid");
   const [fontId, setFontId] = useState(DEFAULT_FONT_ID);
   const [sponsors, setSponsors] = useState<SponsorItem[]>([]);
   const [primary, setPrimary] = useState("#ff5a1f");
@@ -63,11 +51,14 @@ export function DesignerClient() {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [driverName, setDriverName] = useState("");
   const [carNumber, setCarNumber] = useState("");
-  const [nameTagStyle, setNameTagStyle] = useState<NameTagStyle>("bar");
+  const [backColorMode, setBackColorMode] = useState<"same" | "custom">("same");
+  const [backPrimary, setBackPrimary] = useState("#ff5a1f");
+  const [backSecondary, setBackSecondary] = useState("#ffc400");
+  const [backTertiary, setBackTertiary] = useState("#0a0c0f");
+  const [view, setView] = useState<"front" | "back">("front");
 
   const [error, setError] = useState<string | null>(null);
-  const [printify, setPrintify] = useState<PrintifyResult | null>(null);
-  const [sending, setSending] = useState(false);
+  const [added, setAdded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const availableBrands = RC_BRANDS.filter(
@@ -78,20 +69,16 @@ export function DesignerClient() {
   const base = garment === "tee" ? TEE_PRICE_CENTS : CAP_PRICE_CENTS;
   const total = totalPriceCents(garment, sponsors.length);
 
-  const svg = useMemo(
-    () =>
-      buildLiverySVG({
-        primary,
-        secondary,
-        tertiary,
-        sponsors,
-        fontId,
-        driverName,
-        carNumber,
-        nameTagStyle,
-        graphic,
-      }),
-    [primary, secondary, tertiary, sponsors, fontId, driverName, carNumber, nameTagStyle, graphic]
+  const back = backColorMode === "same" ? { primary, secondary, tertiary } : { primary: backPrimary, secondary: backSecondary, tertiary: backTertiary };
+
+  const frontSvg = useMemo(
+    () => buildFrontSVG({ primary, secondary, tertiary, sponsors, fontId }),
+    [primary, secondary, tertiary, sponsors, fontId]
+  );
+  const backSvg = useMemo(
+    () => buildBackSVG({ ...back, driverName, carNumber, fontId }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [back.primary, back.secondary, back.tertiary, driverName, carNumber, fontId]
   );
 
   function addBrand(name: string) {
@@ -130,38 +117,33 @@ export function DesignerClient() {
     setSponsors((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  async function handleSendToPrintify() {
+  async function handleAddToCart() {
     if (sponsors.length === 0) {
       setError("Add at least one sponsor first.");
       return;
     }
     setError(null);
-    setSending(true);
-    setPrintify(null);
-    try {
-      const imageDataUrl = await rasterize(svg, 1200);
-      const sponsorLabels = sponsors.map(sponsorLabel);
-      const res = await fetch("/api/printify/create-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          garment,
-          shirtColor: SHIRT_COLORS[shirtColor].label,
-          size: garment === "tee" ? size : undefined,
-          sponsorCount: sponsors.length,
-          sponsorLabels,
-          title: `${sponsorLabels.join(" x ")} livery`,
-          imageDataUrl,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Printify request failed");
-      setPrintify(data);
-    } catch (err) {
-      setPrintify({ stubbed: true, note: err instanceof Error ? err.message : "Request failed" });
-    } finally {
-      setSending(false);
-    }
+    const frontPreview = await rasterize(frontSvg, 600);
+    addToCart({
+      garment,
+      shirtColor,
+      sponsors,
+      primary,
+      secondary,
+      tertiary,
+      fontId,
+      driverName: driverName || undefined,
+      carNumber: carNumber || undefined,
+      backColorMode,
+      backPrimary: backColorMode === "custom" ? backPrimary : undefined,
+      backSecondary: backColorMode === "custom" ? backSecondary : undefined,
+      backTertiary: backColorMode === "custom" ? backTertiary : undefined,
+      size: garment === "tee" ? size : undefined,
+      priceCents: total,
+      frontPreview,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 3000);
   }
 
   return (
@@ -169,9 +151,27 @@ export function DesignerClient() {
       {/* ── PREVIEW (sticky, like a product page's image column) ─────── */}
       <div className="lg:sticky lg:top-24 lg:self-start">
         <div className="rounded-md border border-white/10 bg-asphalt-800 p-6 shadow-panel">
+          <div className="mb-3 grid grid-cols-2 gap-2">
+            {(["front", "back"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={segmentClass(view === v)}
+              >
+                {v === "front" ? "FRONT" : "BACK"}
+              </button>
+            ))}
+          </div>
+
           <div className="mx-auto max-w-sm">
-            <GarmentMockup garment={garment} garmentColor={shirtColor} label={sponsors.map((s, i) => sponsorLabel(s, i)).join(" x ")}>
-              <div className="h-full w-full" dangerouslySetInnerHTML={{ __html: svg }} />
+            <GarmentMockup
+              garment={garment}
+              garmentColor={shirtColor}
+              view={view}
+              label={view === "front" ? sponsors.map((s, i) => sponsorLabel(s, i)).join(" x ") : undefined}
+            >
+              <div className="h-full w-full" dangerouslySetInnerHTML={{ __html: view === "front" ? frontSvg : backSvg }} />
             </GarmentMockup>
           </div>
 
@@ -198,24 +198,16 @@ export function DesignerClient() {
 
           <button
             type="button"
-            onClick={handleSendToPrintify}
-            disabled={sending}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-flame-500 px-6 py-3.5 font-display text-base uppercase tracking-wider text-asphalt-950 shadow-glow transition hover:bg-flame-400 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleAddToCart}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-flame-500 px-6 py-3.5 font-display text-base uppercase tracking-wider text-asphalt-950 shadow-glow transition hover:bg-flame-400"
           >
             <CheckeredFlagIcon className="h-4 w-4" />
-            {sending ? "SENDING..." : "SEND TO PRINTIFY"}
+            ADD TO CART
           </button>
 
-          {printify ? (
-            <p
-              className={`mt-3 rounded-sm border px-3 py-2 text-xs ${
-                printify.stubbed
-                  ? "border-caution-500/30 bg-caution-500/10 text-caution-400"
-                  : "border-flame-500/30 bg-flame-500/10 text-flame-400"
-              }`}
-            >
-              {printify.note}
-              {printify.productId ? ` (product id: ${printify.productId})` : ""}
+          {added ? (
+            <p className="mt-3 rounded-sm border border-flame-500/30 bg-flame-500/10 px-3 py-2 text-center text-xs text-flame-400">
+              Added to cart. <Link href="/cart" className="underline">View cart →</Link>
             </p>
           ) : null}
 
@@ -228,22 +220,6 @@ export function DesignerClient() {
 
       {/* ── CONTROLS ─────────────────────────────────────────────────── */}
       <div className="space-y-6 rounded-md border border-white/10 bg-asphalt-800 p-6 shadow-panel">
-        <div>
-          <Label>GARMENT</Label>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {(["tee", "cap"] as Garment[]).map((g) => (
-              <button
-                type="button"
-                key={g}
-                onClick={() => setGarment(g)}
-                className={segmentClass(garment === g)}
-              >
-                {g === "tee" ? `TEE (${TEE_BLANK_LABEL.toUpperCase()})` : "SNAPBACK CAP"}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div>
           <Label>SHIRT COLOR</Label>
           <div className="mt-2 flex flex-wrap gap-3">
@@ -343,7 +319,7 @@ export function DesignerClient() {
 
         <div>
           <div className="flex items-baseline justify-between">
-            <Label>COLORS</Label>
+            <Label>FRONT COLORS</Label>
             <a
               href="https://htmlcolorcodes.com/color-picker/"
               target="_blank"
@@ -377,28 +353,8 @@ export function DesignerClient() {
           </p>
         </div>
 
-        <div>
-          <Label>GRAPHIC</Label>
-          <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5">
-            {GRAPHIC_OPTIONS.map((g) => (
-              <GraphicThumb
-                key={g.id}
-                id={g.id}
-                label={g.label}
-                active={graphic === g.id}
-                onClick={() => setGraphic(g.id)}
-                primary={primary}
-                secondary={secondary}
-                tertiary={tertiary}
-                fontId={fontId}
-                sponsors={sponsors}
-              />
-            ))}
-          </div>
-        </div>
-
         <div className="border-t border-white/10 pt-5">
-          <Label>NAME TAG (OPTIONAL)</Label>
+          <Label>BACK OF SHIRT: NAME TAG (OPTIONAL)</Label>
           <div className="mt-2 grid grid-cols-2 gap-4">
             <input
               value={driverName}
@@ -415,18 +371,31 @@ export function DesignerClient() {
               className={inputClass}
             />
           </div>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {NAME_TAG_STYLES.map((n) => (
-              <button
-                type="button"
-                key={n.id}
-                onClick={() => setNameTagStyle(n.id)}
-                className={segmentClass(nameTagStyle === n.id)}
-              >
-                {n.label.toUpperCase()}
-              </button>
-            ))}
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setBackColorMode("same")}
+              className={segmentClass(backColorMode === "same")}
+            >
+              SAME COLORS
+            </button>
+            <button
+              type="button"
+              onClick={() => setBackColorMode("custom")}
+              className={segmentClass(backColorMode === "custom")}
+            >
+              NEW COLORS
+            </button>
           </div>
+
+          {backColorMode === "custom" ? (
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <ColorField label="PRIMARY" value={backPrimary} onChange={setBackPrimary} />
+              <ColorField label="SECONDARY" value={backSecondary} onChange={setBackSecondary} />
+              <ColorField label="TERTIARY" value={backTertiary} onChange={setBackTertiary} />
+            </div>
+          ) : null}
         </div>
 
         {garment === "tee" ? (
@@ -470,7 +439,7 @@ export function DesignerClient() {
                   </tbody>
                 </table>
                 <p className="border-t border-white/10 px-3 py-2 text-[11px] text-chrome-400/70">
-                  {TEE_BLANK_LABEL} measurements, laid flat. Approximate, confirm against the
+                  Comfort Colors 1717 measurements, laid flat. Approximate, confirm against the
                   official spec sheet before a real launch.
                 </p>
               </div>
@@ -482,58 +451,9 @@ export function DesignerClient() {
   );
 }
 
-function GraphicThumb({
-  id,
-  label,
-  active,
-  onClick,
-  primary,
-  secondary,
-  tertiary,
-  fontId,
-  sponsors,
-}: {
-  id: GraphicId;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  primary: string;
-  secondary: string;
-  tertiary: string;
-  fontId: string;
-  sponsors: SponsorItem[];
-}) {
-  const thumbSvg = useMemo(
-    () =>
-      buildLiverySVG({
-        primary,
-        secondary,
-        tertiary,
-        sponsors: sponsors.length ? sponsors : [{ kind: "text", label: "YOUR-LOGO" }],
-        fontId,
-        graphic: id,
-      }),
-    [primary, secondary, tertiary, sponsors, fontId, id]
-  );
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex flex-col items-center gap-1 rounded-sm border p-1.5 transition ${
-        active ? "border-flame-500 shadow-glow" : "border-white/15 hover:border-white/35"
-      }`}
-    >
-      <div className="aspect-square w-full overflow-hidden rounded-sm bg-asphalt-900" dangerouslySetInnerHTML={{ __html: thumbSvg }} />
-      <span className="text-[10px] uppercase tracking-wide text-chrome-400">{label.split(": ")[1] ?? label}</span>
-    </button>
-  );
-}
-
-// Rasterizes the live SVG to a PNG data URL before it goes to Printify,
-// which expects raster artwork. Falls back to the raw SVG data URI if
-// canvas rasterization fails for any reason (older browser, etc.) so the
-// flow never hard-breaks.
+// Rasterizes the live SVG to a PNG data URL, used for the cart thumbnail.
+// Falls back to the raw SVG data URI if canvas rasterization fails for any
+// reason (older browser, etc.).
 async function rasterize(svg: string, size: number): Promise<string> {
   try {
     const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });

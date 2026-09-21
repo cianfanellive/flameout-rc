@@ -26,8 +26,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/design" className="transition hover:text-flame-400">
+                <Link href="/design/cap" className="transition hover:text-flame-400">
                   Design a Cap
+                </Link>
+              </li>
+              <li>
+                <Link href="/cart" className="transition hover:text-flame-400">
+                  Cart
                 </Link>
               </li>
               <li>
